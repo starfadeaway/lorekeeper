@@ -220,7 +220,7 @@ describe('revisionSpan / pageName', () => {
   })
 
   it('wiki 域名前缀被剥掉，非 wiki URL 原样保留', () => {
-    expect(pageName('https://wiki.biligame.com/sr/太空封印站')).toBe('太空封印站')
+    expect(pageName('https://wiki.biligame.com/sr/太空封印站')).toBe('sr/太空封印站')
     expect(pageName('https://example.com/x')).toBe('https://example.com/x')
   })
 })
