@@ -96,6 +96,7 @@ git commit、Python 版本、平台，以及当时的测量条件**（并发度�
 | `PROJECT.md` | **一页纸项目介绍** —— 给第一次看这个项目的人（简历/作品集场景） |
 | `README.md` | 怎么跑起来、架构要点、踩坑记录 |
 | `ARCHITECTURE.md` | **每个工具用在哪、为什么用在那、改了会影响什么** —— 改代码前先看这个 |
+| `db/README.md` | **知识库 SQL 快照** —— 6.5 MB 单文件，`mysql -u root -p < db/kb_agent.sql` 一键恢复；附说明库名为何仍叫 `kb_agent` |
 | `docs/glossary.md` | **专有名词释义** —— RAG / BM25 / RRF / rerank / NDCG 等，每个都写清「是什么、用在哪、实测多少」 |
 | `docs/rerank.md` | **重排（Rerank）深入说明** —— 一篇文档讲透，含实测效果与代价 |
 | `docs/concurrency.md` | **并发实测** —— 能开几个、同时跑会怎样、共享状态有哪些坑、怎么调 |
