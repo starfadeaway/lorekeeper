@@ -75,3 +75,8 @@ _git_*.png
 .run/*
 !.run/*.xml
 
+
+# PyCharm 跑 pytest 会把临时目录放项目根；jieba 的分词缓存也是本地产物
+pytest-of-*/
+jieba.cache
+
