@@ -1,7 +1,7 @@
 # 六个实验在做什么，为什么要做
 
 > ⚠️ **本文档只详述 A–E 五个**；实验 F（披露层消融 + 溯源题集）
-> 见 [`failure_analysis.md`](failure_analysis.md) 与 `EVALUATION.md` 的实验 F 章节。
+> 见 [`../EVALUATION.md`](../EVALUATION.md) 的「实验 F」章节与 [`version_staleness.md`](version_staleness.md)。
 
 > 这份文档回答两个问题：**每个实验想证明什么**、**结果里每一列是什么意思**。
 > 具体数字看 [`../EVALUATION.md`](../EVALUATION.md)，原始 JSON 在 `data/eval/exp_*.json`。
