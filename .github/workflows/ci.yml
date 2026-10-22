@@ -52,6 +52,16 @@ jobs:
       - name: pytest
         run: python -m pytest -p no:cacheprovider
 
+      # smoke_refactor.py 是**脚本**不是 pytest 文件，而 pyproject 的
+      # testpaths 只含 backend/tests —— 它此前从没进过 CI。
+      # 但里面 41 项全是纯函数断言（strip_think 未闭合标签、提示词含游戏名等），
+      # 离线可跑、无网络调用。EVALUATION.md 缺陷清单表的第 1 条与第 11 条
+      # 就靠它守着，放 CI 外面等于「守卫只在我本机跑过」。
+      - name: 冒烟自检（纯函数断言，离线）
+        run: python backend/scripts/smoke_refactor.py
+        env:
+          PYTHONPATH: backend
+
   frontend:
     name: 前端测试 + 类型检查 + 构建
     runs-on: ubuntu-latest
