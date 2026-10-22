@@ -227,9 +227,21 @@ def _make_optional_arg(name: str, required: str, optional: tuple[str, ...],
 def build_server(ctx: ToolContext, *, only: list[str] | None = None):
     """构造一个绑定了 ctx 的 MCPServer。
 
-    `only` 用于与 `Settings.agent_tool_names` 对齐 ——
-    MCP host 能看到的工具集合必须与 Agent 启用的是同一个，
-    否则「生产默认只给 search_kb」这条配置在 MCP 侧就失效了。
+    `only` 缺省 = **全量 MCP_TOOLS**。这**不是**「与 Settings.agent_tool_names
+    对齐」的意思 —— 两者服务的是不同消费者：
+
+      * MCP 面向**外部 host**（Claude Desktop / Cursor 等），它们需要完整工具集
+        才能做问答（calculator 算数值、get_page 取整页）。按生产配置只给
+        search_kb，接入方会寸步难行。
+      * 本项目自己的 Agent 走**进程内直调**，根本不经过 MCP，它取的是
+        `settings.agent_tool_names`（生产默认只有 search_kb）。
+
+    也就是说 **「MCP 暴露 4 个」与「生产 Agent 只挂 1 个」是两个口径，
+    不是同一个**。此前这里的注释写成「必须与 Agent 对齐」，是错的；
+    而 `test_mcp_parity` 恰好断言了全量，于是这层矛盾一直没被发现。
+    `test_mcp_toolset_scope.py` 现在把「差异是刻意的」这件事锁住了。
+
+    要只暴露子集时显式传 `only=[...]`（不传 = 全量）。
     """
     from mcp.server import MCPServer
 

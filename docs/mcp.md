@@ -21,7 +21,7 @@ MCP 的价值是让 **Claude Code / Cursor 等外部 host** 能直接用这个�
 .\.venv\Scripts\python.exe -m app.agent.mcp_server sr
 ```
 
-以 stdio 传输启动，暴露 4 个工具：
+以 stdio 传输启动，暴露 4 个工具（**外部 host 取全量**）：
 
 | 工具 | 参数 | 说明 |
 |---|---|---|
@@ -29,6 +29,19 @@ MCP 的价值是让 **Claude Code / Cursor 等外部 host** 能直接用这个�
 | `get_page` | `title`(必填), `game` | 取页面全文 |
 | `calculator` | `expression`(必填) | 算术 |
 | `list_games` | — | 列出覆盖的游戏 |
+
+> **两个口径，别混：**
+>
+> | 消费者 | 工具集 | 走哪条路径 |
+> |---|---|---|
+> | 外部 MCP host（Claude Desktop / Cursor） | **全量 4 个** | 走 MCP 协议 |
+> | 本项目自己的 Agent | **只挂 `search_kb`**（`AGENT_TOOLS` 默认值） | 进程内直调，**不经过 MCP** |
+>
+> 这两个数**本来就不该相等**：外部 host 需要 `calculator` 算数值、`get_page` 取整页，
+> 只给 `search_kb` 会让接入方寸步难行；而本项目 Agent 不需要协议这一层。
+> 此前 `build_server` 的注释写成「必须与 Agent 对齐」，是错的；
+> 守卫 `test_mcp_toolset_scope.py` 现在把「这个差异是刻意的」锁住了。
+
 
 在 MCP host 的配置里这样写：
 
