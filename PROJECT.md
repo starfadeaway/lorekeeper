@@ -141,7 +141,7 @@ cd frontend; npm run dev
 ```
 
 **规模**：后端 141 个 Python 文件 / 22,663 行（app 8,753 · scripts 6,361 · tests 7,549）；
-前端 17 个 TS/TSX / 2,709 行。**774 项测试全绿，ruff 全仓清。**
+前端 17 个 TS/TSX / 2,709 行。**777 项测试全绿，ruff 全仓清。**
 
 ---
 
