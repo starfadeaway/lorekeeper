@@ -1,3 +1,4 @@
+import { chunksPerGame, countExperimentChunks, countProductionChunks } from '../stats'
 import type { Health } from '../types'
 import type { Theme } from '../prefs'
 
@@ -38,24 +39,16 @@ export function Sidebar({
    * 会让"星铁 9,986 片段"这种数字出现 —— 实际生产 base 库只有 3932。
    * 这种数字会被拿去写简历，必须是真实的。
    */
-  const isProduction = (c: (typeof collections)[number]) =>
-    (c.variant ?? 'base') === 'base' && c.embed_model === health?.embed_model
-  const production = collections.filter(isProduction)
-
-  const chunks = production.reduce((s, c) => s + (c.count ?? 0), 0)
-  const experimentChunks = collections
-    .filter((c) => !isProduction(c))
-    .reduce((s, c) => s + (c.count ?? 0), 0)
+    // 统计逻辑提到 stats.ts 了 —— 它算出来的数字会被拿去写简历，
+    // 必须能单测（此前只靠 tsc 的类型不匹配偶然挡住，那不是测试）。
+    const productionModel = health?.embed_model
+    const chunks = countProductionChunks(collections, productionModel)
+    const experimentChunks = countExperimentChunks(collections, productionModel)
 
   // 每个游戏的片段数。优先用后端下发的 game 字段；
   // 它来自索引自己的 .meta.json（落盘的是 game/embed_model/variant），
   // 拿不到才退回从 collection 名里正则解析。
-  const perGame = new Map<string, number>()
-  for (const c of production) {
-    const m = /^kb_([^_]+)_/.exec(c.name)
-    const game = c.game ?? m?.[1]
-    if (game) perGame.set(game, (perGame.get(game) ?? 0) + (c.count ?? 0))
-  }
+    const perGame = chunksPerGame(collections, productionModel)
 
   return (
     <aside className="sidebar" data-open={open}>
