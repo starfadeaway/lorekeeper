@@ -67,3 +67,11 @@ _git_*.png
 .run/rt*/
 .run/*.py
 
+
+# Obsidian / 编辑器产生的本地配置
+.obsidian/
+
+# .run/ 下只保留 IDE 运行配置（*.xml），其余都是临时产物
+.run/*
+!.run/*.xml
+
