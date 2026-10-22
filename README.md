@@ -103,7 +103,7 @@ git commit、Python 版本、平台，以及当时的测量条件**（并发度�
 | `docs/injection_guard.md` | **间接 Prompt 注入** —— 威胁模型、为什么"命中就拦"是错的、规则集实测误报率 |
 | `docs/fallback_chain.md` | **LLM 降级链** —— 哪些故障值得换模型、哪些换也没用、降级为什么必须显形 |
 | `docs/delta_sync.md` | **版本更新怎么做** —— 增量同步的实测口径、chunk 级脏数据陷阱、为什么先落内容指纹再动增量 |
-| `docs/experiments.md` | **六个实验各在想证明什么、结果里每列是什么意思**（详述 A–E，F 见 failure_analysis）—— 忘了当初为什么做实验就看这个 |
+| `docs/experiments.md` | **六个实验各在想证明什么、结果里每列是什么意思**（详述 A–E；F 见 `EVALUATION.md` 的「实验 F」章节）—— 忘了当初为什么做实验就看这个 |
 | `EVALUATION.md` | 实验数据与结论，含方法论教训 |
 
 ---
@@ -528,10 +528,10 @@ cd lorekeeper\backend
 | 后端 | FastAPI，`/api/health` `/api/retrieve` `/api/chat` `/api/chat/stream` `/api/runs` `/api/runs/{run_id}` `/api/deliverable` `/api/ingest` `/api/stats` |
 | 前端 | React + Vite + TS，SSE 流式、工具时间线、引用、检索调试面板、双主题、背景图、移动端抽屉 |
 | 存储 | MySQL 语料三表与向量库**逐条一致**（`backfill_mysql.py` 剪枝后核对）：pages 1401（sr 706 / zzz 260 / ys 435）/ chunks 10843（3932 / 1498 / 5413）/ facts 25111（15017 / 4976 / 5118）。唯一差异是 ys 的「角色投稿测试（先说对不起）」正文长度为 0，被 `page_filter` 挡在索引外但 MySQL 记了"抓到了"；另有 runs / tool_calls / eval_cases / eval_results / sessions / messages |
-| 评测 | 评测集 **56 条三库全覆盖**（星铁 32 / 绝区零 12 / 原神 12）；实验 A/B/C/D/E 均已出真实数据 |
+| 评测 | 评测集 **56 条三库全覆盖**（星铁 32 / 绝区零 12 / 原神 12）；实验 A/B/C/D/E/F 均已出真实数据（F 另立 8 条溯源题集，不进主评测集） |
 | 检索实验覆盖 | **A / B / D 均已扩到三库**（sr 29 / ys 9 / zzz 10 = 48 条有 gold 的题），汇总按库分节、逐库配对检验，不混口径 |
 | 已知偏差 | 无。`eval_cases` 表已是 **56 条**（sr 32 / ys 12 / zzz 12），与代码里的评测集逐条一致（2026-10 实查） |
-| 工程 | pytest **771 项**全绿（含故障注入 23 + 引用校验 43 + 接线守卫 15 + 产物可观测 7）；smoke 自检 41 项；ruff 全仓清；前端 vitest **56 项**；GitHub Actions 跑 pytest + ruff + 前端测试 + 前端构建 + 密钥卫生 |
+| 工程 | pytest **777 项**全绿（含故障注入 23 + 引用校验 43 + 接线守卫 15 + 产物可观测 8）；smoke 自检 41 项；ruff 全仓清；前端 vitest **65 项**；GitHub Actions 跑 pytest + ruff + 冒烟自检 + 前端测试与构建 + 密钥卫生 |
 
 一条命令自检：
 
