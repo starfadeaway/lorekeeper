@@ -313,8 +313,9 @@ LanceDB 0.40 的 `create_index(metric="cosine")` 已废弃，它建的是 IVF-PQ
 流式**首个数据包 860ms**（**不是「第一个字」** —— 上游没有 token 级流式）。
 **感知延迟 −75%，总耗时几乎不变**（3410 → 3147ms）。
 
-> 注意：`EVALUATION.md` 里另有一组实测（**4716ms → 721ms，−85%**），那是不同批次、
-> 不同链路的测量结果。**两组数不互换**——引用时请连同口径一起引，别只摘百分比。
+> 数据源：`data/eval/probe_stream_latency.json`（`chat_non_stream_ms` 3410.3 /
+> `ttft_ms` 860 / `total_ms` 3147 / 22 个事件）。`EVALUATION.md` 此前误写为
+> 「4716 → 721，−85%」，那组数在产物里不存在，已一并更正。
 
 ---
 
