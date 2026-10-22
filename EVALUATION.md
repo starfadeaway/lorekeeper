@@ -1665,11 +1665,11 @@ Chat 基座 / temperature / tools schema / 检索配置 / 评测题集 / gold �
 ## 排查过程中发现并已修复的真实缺陷
 
 **先给一张清单**（简历里那句「累计定位并修复 10 余处真实缺陷」指的就是这 11 条；
-每条后面都有对应的守卫测试，不是口头声称）：
+每条都有对应的守卫（pytest 用例，或 CI 里跑的 `smoke_refactor.py`），不是口头声称）：
 
 | # | 症状 | 根因 | 守卫 |
 |---|---|---|---|
-| 1 | 问原神问题被回「知识库未收录」、0 步拒答，而页面确实在库里 | `SYSTEM_PROMPT` 写死两个游戏名，改多库时漏了它 | `smoke_refactor` 断言提示词含每个已配置游戏的显示名 |
+| 1 | 问原神问题被回「知识库未收录」、0 步拒答，而页面确实在库里 | `SYSTEM_PROMPT` 写死两个游戏名，改多库时漏了它 | `smoke_refactor.py`（已在 CI 里跑）断言提示词含每个已配置游戏的显示名 |
 | 2 | 不可答题空转 7 步、30317 prompt token、12.7s | 缺「同工具重复调用」熔断，每步都顶到 `max_steps` | SearchGuard：查询指纹去重 + 连续低置信强制收尾 |
 | 3 | 实验 65 分钟零产出、磁盘上零结果 | 三处叠加：`close()` 不在 `finally`（429 时每调用泄漏一个连接池）、`timeout` 未传给 SDK、结果只在全跑完后落盘一次 | 三处同修；守卫覆盖增量落盘 |
 | 4 | Judge 解析失败被静默算成「两者打平」，还盖掉另一次明确的胜负 | `_parse_json(raw) or {}` 让 winner 默认取 `TIE` | 用 `None` 区分「没结论」与「真平局」，reason 标死 `judge_parse_error` |
@@ -1678,8 +1678,8 @@ Chat 基座 / temperature / tools schema / 检索配置 / 评测题集 / gold �
 | 7 | p 值被 `round(p, 4)` 抹成 `0.0000`，对外宣称「极显著」 | 舍入 + `f"{p:.4f}"` 两层都会丢精度 | 保留原值 + `p_display`（<1e-4 走科学计数法） |
 | 8 | 效应量比配对口径夸大 1.4~1.6 倍 | `cohens_d` 用的是组间合并 SD | 主口径改配对（`mean_diff/sd_diff`），旧口径降为 `cohens_d_pooled` 供对账 |
 | 9 | 均值与配对检验用了**不同样本集**，两份数字被当成一份结论 | `run_eval` 的 summarize 与 paired_test 各自过滤 | 统一 `kept_rows()`，并加 AST 守卫禁止绕过 |
-| 10 | 侧边栏统计「虚高 4.4 倍」 | collection 缺 `game`/`variant` 字段，按错字段聚合 | `tsc` 类型不匹配挡住；加统计守卫 |
-| 11 | 实验脚本的 `strip_think` 副本与生产实现分叉：未闭合 `<think>` 不删 | 脚本里抄了一份正则，只匹配闭合标签 | 改为直接 `import` 生产实现；历史产物复核无残留 |
+| 10 | 侧边栏统计「虚高 4.4 倍」 | collection 缺 `game`/`variant` 字段，把 b1/b2/qwen 变体库也并进生产合计 | `frontend/src/stats.test.ts`：变体库不得混进生产合计、生产+实验之和等于全部 |
+| 11 | 实验脚本的 `strip_think` 副本与生产实现分叉：未闭合 `<think>` 不删 | 脚本里抄了一份正则，只匹配闭合标签 | 改为直接 `import` 生产实现；`smoke_refactor.py` 有「未闭合标签丢弃其后全部」断言（已在 CI） |
 
 ---
 
