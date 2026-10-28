@@ -1,0 +1,27 @@
+# ruff 独立配置（原本在 pyproject.toml 的 [tool.ruff] / [tool.ruff.lint] 下）。
+# 拆出来的原因同上：pyproject.toml 不入库，但这份配置必须跟着仓库走，
+# 否则 CI 的 `ruff check .` 会退回默认行长 88，且丢掉下面的 ignore 与 per-file-ignores。
+line-length = 110
+target-version = "py311"
+extend-exclude = [".venv", "frontend", "data"]
+
+[lint]
+select = [
+    "E",    # pycodestyle
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # bugbear
+    "UP",   # pyupgrade
+    "SIM",  # simplify
+]
+ignore = [
+    # 中文项目里注释/文档字符串写得很长，E501 只在代码行上保留
+    "E501",
+    # 测试里大量用 assert 重写，SIM117 之类不适用
+    "SIM117",
+]
+
+[lint.per-file-ignores]
+# 脚本要先 sys.path.insert 再 import，E402 是这种写法的固有代价，不是缺陷
+"backend/scripts/*.py" = ["E402", "T201"]
+"backend/tests/*.py" = ["E402"]

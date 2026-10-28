@@ -9,13 +9,37 @@ venv/
 # 环境与密钥(严禁提交)
 .env
 
-# 简历文案：只留在本地，不进仓库。
-# 它含姓名、手机号、邮箱、学历、前雇主等个人身份信息（手机号和邮箱在整个仓库里
-# 只出现在这一个文件），而且内容随时跟着桌面 docx 变 —— 留在仓库里既暴露 PII，
-# 又会有一份过期副本对不上真正投递的那版。
-# 本地仍需保留：它是「数字引用规矩」表的唯一口径源（改简历时先改 docx，
-# 再回来同步这个文件），所以这里只从版本控制移除，不删本地文件。
+# 本地专属文件：一律不入库，但**本地保留**
+# 这些是「本机开发便捷脚本 / 自用素材 / 本地元数据」，不是仓库要对外展示的东西。
+#
+# RESUME.md —— 简历文案。含姓名、手机号、邮箱、学历、前雇主等个人身份信息
+#   （手机号和邮箱在整个仓库里只出现在这一个文件），而且内容随时跟着桌面 docx 变，
+#   留在仓库里既暴露 PII，又会有一份过期副本对不上真正投递的那版。
+#   本地仍需保留：它是「数字引用规矩」表的唯一口径源（改简历时先改 docx，
+#   再回来同步这个文件），所以只从版本控制移除，不删本地文件。
+#
+# run_all.py / run_server.py / run_client.py —— 本机一键起前后端的便捷入口
+#   （含 Windows venv 路径与 taskkill 收进程树等本机细节）。
+#   仓库对外的启动方式见 README「快速开始」，不依赖这三个脚本。
+#
+# INTERVIEW.md —— 面试速查自用稿，不属于项目交付物。
+#
+# pyproject.toml —— 只剩本地元数据。**工具配置已拆到仓库根的 pytest.ini 与 ruff.toml**
+#   （pytest 的 pythonpath=["backend"]、asyncio_mode=auto、markers，
+#    ruff 的 line-length=110、ignore、per-file-ignores 都在那两个文件里），
+#   否则 CI 会直接红：pytest 失去 pythonpath 会 ImportError，
+#   ruff 会退回默认行长 88 且丢掉 ignore 与 per-file-ignores。
 RESUME.md
+INTERVIEW.md
+run_all.py
+run_server.py
+run_client.py
+pyproject.toml
+
+# 上面三个便捷脚本对应的 PyCharm 运行配置 —— 脚本不入库，配置也就没有意义
+.run/0-一键启动.run.xml
+.run/0b-只启动后端.run.xml
+.run/0c-只启动前端.run.xml
 
 # 运行时数据
 # data/raw 是可再生派生物（重新抓取即可），data/lance 是当前默认的向量索引，
@@ -82,6 +106,14 @@ _git_*.png
 # .run/ 下只保留 IDE 运行配置（*.xml），其余都是临时产物
 .run/*
 !.run/*.xml
+
+# 但指向 run_all.py / run_server.py / run_client.py 的那三个除外：
+# 脚本已按「本地专属文件」移出版本控制，配置跟着走才是坏的。
+# 这三条必须放在 `!.run/*.xml` **之后** —— gitignore 后面的规则覆盖前面的，
+# 放前面会被 `!.run/*.xml` 重新纳入。
+.run/0-一键启动.run.xml
+.run/0b-只启动后端.run.xml
+.run/0c-只启动前端.run.xml
 
 
 # PyCharm 跑 pytest 会把临时目录放项目根；jieba 的分词缓存也是本地产物

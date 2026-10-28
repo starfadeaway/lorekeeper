@@ -42,17 +42,18 @@ jobs:
       # pytest 套件刻意不打网络：断言的是纯函数（路由、过滤器、schema、
       # 配置契约、AST 白名单），任何一项要调 API 才能跑就说明设计跑偏了。
       #
-      # 范围是 `.` 不是 `backend`：根目录的 run_all.py / run_client.py / run_server.py
-      # 是 README 里让人直接跑的第一入口，却在旧范围外躺着 4 个 F401/UP031 没人报警
-      # （实测 `ruff check .` 红、`ruff check backend` 绿）。测试文件夹具，
-      # 跑得通的入口脚本也得过同一把尺子。
+      # 范围是 `.` 不是 `backend`：整个仓库（含 backend/scripts 下的脚本）
+      # 都要过同一把尺子。此前根目录的便捷脚本在旧范围外躺着 4 个 F401/UP031
+      # 没人报警（实测 `ruff check .` 红、`ruff check backend` 绿）——
+      # 现在那些便捷脚本已按「本地专属文件」移出版本控制，
+      # 但**仓库里剩下的每一个 .py 都必须过 lint**，这个范围不能收窄。
       - name: ruff
         run: ruff check .
 
       - name: pytest
         run: python -m pytest -p no:cacheprovider
 
-      # smoke_refactor.py 是**脚本**不是 pytest 文件，而 pyproject 的
+      # smoke_refactor.py 是**脚本**不是 pytest 文件，而 pytest.ini 的
       # testpaths 只含 backend/tests —— 它此前从没进过 CI。
       # 但里面 41 项全是纯函数断言（strip_think 未闭合标签、提示词含游戏名等），
       # 离线可跑、无网络调用。EVALUATION.md 缺陷清单表的第 1 条与第 11 条

@@ -108,7 +108,7 @@ async def main() -> None:
         stream = {**st, "ttft_ms": round(st["ttft_ms"]), "total_ms": round(st["total_ms"])}
     except Exception as exc:
         print(f"  [流式不可用] {type(exc).__name__}: {str(exc)[:120]}")
-        print("  （后端没起？在项目根跑 .venv\\Scripts\\python.exe run_server.py）")
+        print("  （后端没起？在项目根跑 .venv\\Scripts\\python.exe -m uvicorn app.main:app --app-dir backend --port 8000）")
         stream = {"error": f"{type(exc).__name__}: {str(exc)[:200]}"}
 
     # 落盘。TTFT 是"感知延迟 −85%"这个卖点的唯一证据，

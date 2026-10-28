@@ -269,7 +269,7 @@ _TABLE = {
 ```powershell
 # 1. 依赖（Python 3.13）
 cd lorekeeper
-D:\Python3135\python.exe -m venv .venv
+python -m venv .venv
 .venv\Scripts\python.exe -m pip install -r backend\requirements.txt
 
 # 2. 配置密钥（.env 从 .env.example 复制，.env 已在 .gitignore 中）
@@ -280,22 +280,29 @@ cd backend
 ..\.venv\Scripts\python.exe scripts\bulk_ingest.py --game sr --interval 6 --batch 10
 ..\.venv\Scripts\python.exe scripts\bulk_ingest.py --game zzz --interval 6 --batch 10
 
-# 4. 起后端 + 前端（推荐：一条命令）
+# 4. 起后端（--app-dir backend 把 backend/ 加进 Python 路径，不必切目录）
 cd ..
-.venv\Scripts\python.exe run_all.py
-#    → 后端 http://127.0.0.1:8000/docs   前端 http://localhost:5173
+.venv\Scripts\python.exe -m uvicorn app.main:app --app-dir backend --port 8000
+#    → 接口文档 http://127.0.0.1:8000/docs   健康检查 http://127.0.0.1:8000/api/health
 
-# 5. 自检
+# 5. 起前端（另开一个终端）
+cd frontend
+npm.cmd run dev
+#    → http://localhost:5173
+
+# 6. 自检（再开一个终端，回到项目根）
+cd ..
 .venv\Scripts\python.exe backend\scripts\smoke.py
 ```
 
-> ⚠️ **不要用 `uvicorn app.main:app`**：那条命令依赖「当前工作目录是 `backend/`」，
-> 在项目根或其他目录会直接 `ModuleNotFoundError: app`。用 `run_server.py`，
-> 它自己把 `backend/` 加进 `sys.path`，任何工作目录下都能跑。
+> ⚠️ **不要写 `uvicorn app.main:app`**：那条命令依赖「当前工作目录是 `backend/`」，
+> 在项目根或其他目录会直接 `ModuleNotFoundError: app`。
+> 上面的 `--app-dir backend` 就是干这个的 —— 它把 `backend/` 加进 Python 路径，
+> 在任何目录下都能跑，不用切目录。
 
-PyCharm 里打开项目后，右上角运行配置已经配好 7 个，免填：
-`0-一键启动`（日常用这个）/ `0b-只启动后端` / `0c-只启动前端` /
+PyCharm 里打开项目后，右上角运行配置已经配好 4 个，免填：
 `3-冒烟自检` / `4-入库 批量抓取` / `5-评测 实验A` / `6-回填 MySQL`。
+（一键启动那几个配置指向本机专属的便捷脚本，不在仓库里，用上面的命令即可。）
 
 > 前端用 `npm` 而不是 `pnpm`：pnpm 11 的构建白名单（`onlyBuiltDependencies`）
 > 在这个环境下没生效，esbuild 的二进制拉不下来会直接导致 vite 起不来。
