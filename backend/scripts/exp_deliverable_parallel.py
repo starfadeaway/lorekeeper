@@ -100,14 +100,22 @@ def build_agent(label: str, settings, llm, game: str, parallel_limit: int):
 
 
 async def run_one(label: str, case: dict, settings, inner_llm, parallel_limit: int,
-                  position: int) -> dict:
-    """跑一条用例的一个 arm；返回一行产物（与实验 A–F 的 row 形状不同，但可读）。"""
+                  position: int, timeout: float) -> dict:
+    """跑一条用例的一个 arm；返回一行产物（与实验 A–F 的 row 形状不同，但可读）。
+
+    **每条用例独立超时**：2026-10-30 的 A/A 重跑就在这个项目上挂死过一次
+    （3 条 Established TLS 连接、CPU 不再增长、partial 35 分钟不写），
+    而实验脚本通常无人值守 —— 没有外层超时，一次挂死会带走整轮。
+    超时的那一行记为 error 并继续，不让它把后面的用例一起拖没。
+    """
     llm = CountingLLM(inner_llm)
     agent = build_agent(label, settings, llm, case["game"], parallel_limit)
     t0 = time.perf_counter()
     err = None
     try:
-        res = await agent.run(case["question"], game=case["game"])
+        res = await asyncio.wait_for(
+            agent.run(case["question"], game=case["game"]), timeout=timeout
+        )
         wall_ms = int((time.perf_counter() - t0) * 1000)
         statuses = [s.status for s in res.subtasks]
         row = {
@@ -176,6 +184,7 @@ async def main() -> None:
     ap.add_argument("--limit", type=int, default=0, help="0 = 全部")
     ap.add_argument("--parallel-limit", type=int, default=4, help="单题内部子任务并发上限")
     ap.add_argument("--warmup", type=int, default=1, help="预热题数（两组都跑，结果丢弃）")
+    ap.add_argument("--timeout", type=float, default=300.0, help="单条用例超时（秒）")
     ap.add_argument("--out", default="exp_deliverable_parallel.json")
     args = ap.parse_args()
 
@@ -192,8 +201,8 @@ async def main() -> None:
 
     # ---- 预热：建 BM25、热连接，结果丢弃 ----
     for i in range(min(args.warmup, len(cases))):
-        await run_one("serial", cases[i], settings, llm, args.parallel_limit, 0)
-        await run_one("parallel", cases[i], settings, llm, args.parallel_limit, 1)
+        await run_one("serial", cases[i], settings, llm, args.parallel_limit, 0, args.timeout)
+        await run_one("parallel", cases[i], settings, llm, args.parallel_limit, 1, args.timeout)
     print(f"预热完成 {args.warmup} 条（结果丢弃）", flush=True)
 
     rows: list[dict] = []
@@ -201,7 +210,7 @@ async def main() -> None:
     for idx, case in enumerate(cases, start=1):
         order = ("serial", "parallel") if idx % 2 == 1 else ("parallel", "serial")
         for position, label in enumerate(order):
-            row = await run_one(label, case, settings, llm, args.parallel_limit, position)
+            row = await run_one(label, case, settings, llm, args.parallel_limit, position, args.timeout)
             rows.append(row)
             print(f"  [{label:<8}] {case['case_id']} wall={row['wall_ms']:>6}ms "
                   f"tok={row['prompt_tokens'] + row['completion_tokens']:>6} "
