@@ -112,11 +112,13 @@ MCP 是**独立的 server 入口**（`backend/scripts/mcp_stdio_entry.py`），
 ### 1. mcp 会把 starlette 顶到 FastAPI 不兼容的版本
 
 ```
-mcp 2.3.0 声明 starlette>=0.48
+mcp 2.3.0 的 starlette 约束是分档的：
+    starlette>=0.27      ; python_version <  "3.14"   ← 本项目（3.13）落这档
+    starlette>=0.48.0    ; python_version >= "3.14"
 fastapi 0.115.6 要求 starlette<0.42
 ```
 
-直接 `pip install mcp` 会把 starlette 顶到 1.8.0，结果：
+直接 `pip install mcp`（不钉版本）会把 starlette 顶到最新版（当时 1.8.0），结果：
 
 ```
 TypeError: Router.__init__() got an unexpected keyword argument 'on_startup'
@@ -125,12 +127,16 @@ TypeError: Router.__init__() got an unexpected keyword argument 'on_startup'
 **整个后端起不来，而报错完全指不到 mcp。**
 当时正在跑的实验 E 因此被污染，及时停掉了。
 
-修法：两者可以共存（`pip check` 干净），但必须**先装 starlette 再装 mcp**：
+修法：钉死 `starlette==0.41.3`。它同时满足 fastapi 的 `<0.42` 与 mcp 的 `>=0.27`，
+所以**一次 `pip install -r backend/requirements.txt` 就能装对** ——
+「先装 starlette 再装 mcp」不是关键，版本才是：
 
 ```powershell
-.\.venv\Scripts\python.exe -m pip install starlette==0.41.3
-.\.venv\Scripts\python.exe -m pip install mcp==2.3.0
+.\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt
 ```
+
+⚠️ 将来若升到 Python 3.14，mcp 的要求会变成 `>=0.48`，与 fastapi 0.115.6 的
+`<0.42` **无交集** —— 那时必须同时升 fastapi，而不是只改 starlette 的 pin。
 
 守卫 `test_starlette_is_pinned_below_fastapi_limit` 锁住这条。
 

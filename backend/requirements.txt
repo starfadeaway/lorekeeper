@@ -46,18 +46,47 @@ python-dotenv==1.0.1
 # 曾经列过 loguru，已删：全仓用标准库 logging（tools.py / llm / persist 都是
 # logging.getLogger），两套日志并存只会让「日志去哪了」变成一个问题。
 
+# ---- Agent 框架对照（实验 G）----
+# langgraph **只**服务于 `app/agent/react_langgraph.py` —— 那是实验 G 的对照臂：
+# 用它的 StateGraph 复现手写 ReAct 的同一条循环，用来量化「手写 vs 框架」差多少。
+# 生产路径（`/api/chat`）**不碰它**，守卫 `test_react_langgraph.py` 盯着这一点。
+#
+# 为什么进主 requirements 而不是单独一个文件：`test_requirements_honest.py`
+# 要求 app/ 里 import 的包必须在 requirements 里声明；进主 requirements 的另一个
+# 好处是 CI 也会装上 —— 对照臂因此在 CI 上真跑守卫，而不是永远 skip。
+#
+# 钉 1.2.18 有两层理由：
+#   一，1.2 起 prebuilt 的 `create_react_agent` 迁到了 `langchain.agents`，
+#      也就是「用 LangGraph 写 ReAct」现在**两边都得自己搭节点** ——
+#      本项目的对照臂正是用 StateGraph 手搭节点，因此这个版本才有对照意义；
+#   二，它对 langchain-core 的约束是 `>=1.4.7,<2`，而 langchain-core **不依赖 openai**，
+#      所以本项目钉死的 `openai==1.59.6` 不会被它顶掉。
+langgraph==1.2.18
+
 # ---- MCP（Model Context Protocol）----
 # ⚠️ **starlette 必须钉死在 0.41.x**，这不是随手写的，是踩坑换来的：
 #
-# mcp 2.3.0 声明 `starlette>=0.48`，直接 `pip install mcp` 会把 starlette
-# 顶到 1.8.0；而 fastapi 0.115.6 要求 starlette<0.42。
-# 结果是 FastAPI 连构造都失败：
+# 直接 `pip install mcp`（不钉版本）会把 starlette 顶到 1.8.0；
+# 而 fastapi 0.115.6 要求 starlette<0.42。结果是 FastAPI 连构造都失败：
 #     TypeError: Router.__init__() got an unexpected keyword argument 'on_startup'
 # —— 整个后端起不来，而且报错信息完全指不到「是你刚装的 mcp 干的」。
 #
-# 两者其实可以共存（实测 pip check 干净、MCP server 能正常列工具并调用），
-# 但必须**先装 starlette==0.41.3 再装 mcp**，否则 pip 解析顺序不可控。
-# 安装顺序见 docs/mcp.md。
+# ⚠️ **归因更正（2026-10-30 核对 PyPI 元数据）**：早先这里写的是
+# 「mcp 2.3.0 声明 starlette>=0.48」。**那是不准确的** ——
+# mcp 2.3.0 的约束是**按 Python 版本分档**的：
+#     starlette>=0.27      ; python_version <  "3.14"   ← 本项目（3.13）落在这档
+#     starlette>=0.48.0    ; python_version >= "3.14"
+# 也就是说在 Python 3.13 下 mcp 根本不要求 0.48，
+# 真正把 starlette 顶到 1.x 的是「**不钉版本时 pip 选最新版**」这条路径。
+# 钉死 0.41.x 的硬理由只有一个，但很硬：**fastapi 0.115.6 要求 starlette<0.42**。
+#
+# 因此「必须先装 starlette 再装 mcp」这个说法也不准确：
+# 一次 `pip install -r backend/requirements.txt` 就能装对 ——
+# `starlette==0.41.3` 是硬约束，它同时满足 fastapi 的 <0.42 与 mcp 的 >=0.27。
+# 保留这行注释是为了让下一个人别再把 starlette 的 pin 删掉。
+#
+# ⚠️ 若将来升到 Python 3.14，mcp 的要求会变成 >=0.48，与 fastapi 0.115.6 的
+# <0.42 **无交集** —— 那时必须同时升 fastapi，而不是只改 starlette 的 pin。
 mcp==2.3.0
 starlette==0.41.3
 

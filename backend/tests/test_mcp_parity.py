@@ -229,11 +229,23 @@ def test_no_runtime_transport_switch():
 def test_starlette_is_pinned_below_fastapi_limit():
     """starlette 必须 < 0.42，否则 FastAPI 直接构造失败。
 
-    2026-10-13 实测：`pip install mcp` 会把 starlette 顶到 1.8.0
-    （mcp 2.3.0 声明 starlette>=0.48），而 fastapi 0.115.6 要求 <0.42，
-    结果 `FastAPI()` 抛
+    2026-10-13 实测：`pip install mcp`（不钉版本）会把 starlette 顶到 1.8.0，
+    而 fastapi 0.115.6 要求 <0.42，结果 `FastAPI()` 抛
     `TypeError: Router.__init__() got an unexpected keyword argument 'on_startup'`
     —— 整个后端起不来，而报错完全指不到 mcp。
+
+    ⚠️ **归因更正（2026-10-30 核对 PyPI 元数据）**：早先这里写的是
+    「mcp 2.3.0 声明 starlette>=0.48」。那不准确 —— mcp 2.3.0 的约束
+    **按 Python 版本分档**：
+        starlette>=0.27    ; python_version <  "3.14"   ← 本项目（3.13）落这档
+        starlette>=0.48.0  ; python_version >= "3.14"
+    在 Python 3.13 下 mcp 根本不要求 0.48；
+    真正把 starlette 顶到 1.x 的是「不钉版本时 pip 选最新版」。
+    钉死 0.41.x 的硬理由只有一个，但很硬：**fastapi 要求 <0.42**。
+
+    所以「安装顺序」不是关键 —— 一次 `pip install -r requirements.txt` 就装得对
+    （`starlette==0.41.3` 同时满足 fastapi 的 <0.42 与 mcp 的 >=0.27）。
+    这条断言要守的是**版本本身**，不是安装顺序。
     """
     import starlette
     from fastapi import FastAPI
@@ -241,7 +253,7 @@ def test_starlette_is_pinned_below_fastapi_limit():
     major, minor = (int(x) for x in starlette.__version__.split(".")[:2])
     assert (major, minor) < (0, 42), (
         f"starlette {starlette.__version__} 与 FastAPI 0.115.x 不兼容，"
-        "后端无法启动。安装顺序必须是 starlette==0.41.3 在前、mcp 在后。"
+        "后端无法启动。requirements.txt 里必须钉死 starlette==0.41.3。"
     )
     # 确认真的能构造出 app —— 只看版本号不够，约束可能来自别的传递依赖
     FastAPI()

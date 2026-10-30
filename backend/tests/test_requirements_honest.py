@@ -133,8 +133,8 @@ _RUNTIME_ONLY = {
     "uvicorn": "ASGI 服务器，由启动入口/命令行拉起，本就不出现在业务 import 图里",
     "starlette": (
         "FastAPI 的底层 ASGI 实现，项目不直接 import；"
-        "但**必须钉 0.41.x** —— mcp 2.3.0 要求 starlette>=0.48，"
-        "不钉死就会被顶到 1.8.0 并让 FastAPI 连构造都失败"
+        "但**必须钉 0.41.x** —— fastapi 0.115.6 要求 starlette<0.42，"
+        "不钉死就会在装 mcp 时被顶到 1.8.0 并让 FastAPI 连构造都失败"
     ),
     "cryptography": (
         "由 PyMySQL._auth 顶层 import，MySQL 8 默认的 caching_sha2_password "
