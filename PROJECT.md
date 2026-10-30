@@ -77,6 +77,7 @@ p=**1.3e-11 / 3.1e-15 / 2.8e-08**，Cohen's d（配对口径）=**1.33 / 2.63 / 
 | 流式 | 首个 SSE 数据包 **860ms** vs 非流式全量 3410ms（**感知延迟 −75%**，总耗时几乎不变） |
 | 并发 | 4 并发吞吐 **×3.40**，1/4/8 三档 top-5 结果**逐条一致** |
 | KV cache | 命中率稳定 78%–88%，但**墙钟没有量级收益** —— 它省的是费用，不是延迟 |
+| 交付物并行 | n=18（6 题 × 3 轮）：墙钟 **−46%**（逐题配对比值中位数 0.537）、token +0.5%、36 次 0 error —— 手写 `asyncio.gather` 保序实现，**未迁 LangGraph**（[ADR-001](docs/adr_001_orchestration.md)） |
 
 **安全与可靠性**
 
@@ -153,4 +154,5 @@ cd frontend; npm run dev
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | 从入口到出口的逐步展开 + 「改这段代码会影响什么」对照表 |
 | [`EVALUATION.md`](EVALUATION.md) | 全部实验数据、配对检验、方法论教训 |
 | [`docs/failure_analysis.md`](docs/failure_analysis.md) | 四类失败模式与已知盲区 |
+| [`docs/adr_001_orchestration.md`](docs/adr_001_orchestration.md) | 编排层框架选型：chat 为什么冻结手写、deliverable 为什么不迁 LangGraph（实测 + 定价表） |
 | [`docs/comparison_with_rag.md`](docs/comparison_with_rag.md) | 与通用 RAG 方案的差异、差距清单、面试讲法 |

@@ -1,7 +1,7 @@
 # lorekeeper · 游戏内容知识库问答 Agent
 
 > **一句话**：三库 1401 页 / 10843 chunk 的垂直知识库问答系统。手写 ReAct Agent +
-> 混合检索（BM25 ∥ 向量 → RRF → Cross-Encoder 重排），6 组单变量消融实验（A–F），
+> 混合检索（BM25 ∥ 向量 → RRF → Cross-Encoder 重排），6 组单变量消融（A–F）+ 框架对照（G）与交付物并行（P1），
 > 每个数字都能追溯到产生它的脚本与 git commit。
 
 ![问答界面](docs/screenshot-chat.png)
@@ -104,7 +104,7 @@ git commit、Python 版本、平台，以及当时的测量条件**（并发度�
 | `docs/fallback_chain.md` | **LLM 降级链** —— 哪些故障值得换模型、哪些换也没用、降级为什么必须显形 |
 | `docs/delta_sync.md` | **版本更新怎么做** —— 增量同步的实测口径、chunk 级脏数据陷阱、为什么先落内容指纹再动增量 |
 | `docs/experiments.md` | **六个实验各在想证明什么、结果里每列是什么意思**（详述 A–E；F 见 `EVALUATION.md` 的「实验 F」章节）—— 忘了当初为什么做实验就看这个 |
-| `docs/adr_001_orchestration.md` | **ADR-001：Agent 编排层框架选型** —— chat 为什么冻结手写、deliverable 为什么改用 LangGraph；含判据、验收标准与可辩论分歧点 |
+| `docs/adr_001_orchestration.md` | **ADR-001：Agent 编排层框架选型** —— chat 为什么冻结手写、deliverable 为什么最终**不**迁 LangGraph（P1 实测与定价表）；含可辩论分歧点 |
 | `EVALUATION.md` | 实验数据与结论，含方法论教训 |
 
 ---
@@ -531,6 +531,7 @@ cd lorekeeper\backend
 | 可用性 | Chat 降级链：只对 429/5xx/超时降级，400/401 不重试；降级在响应 `fallback` 字段与 `/api/health` 留痕（`docs/fallback_chain.md`） |
 | 数据时效 | 版本更新：实测 wiki `recentchanges` 可穿过 WAF。⚠️ **两个口径别混**：落盘产物 `delta_sync_sr_7d.json` 是 **148/706 页（20.9%）、13 次请求**（`lower_bound: true`，窗口被 WAF 截断在 1003 页）；正文另记了一次翻完全部 2922 条的运行，得 **162 页 / 15 次请求**，但**那一跑没有落盘产物**。全量重抓要 71 次。⚠️ 全站口径 1157 页会得出"增量无意义"的**相反结论**。内容指纹已落库（1401 页 + 10843 chunk 100% 覆盖）；「归一化把格式误判从 100% 压到 0」是**探针按构造必然如此**（比原始字节则任何重格式化都算不同），别当战果讲（`docs/delta_sync.md`） |
 | Agent | 手搓 ReAct，工具注册表 4 个（`search_kb` / `get_page` / `calculator` / `list_games`），**生产默认只挂 `search_kb`**（`AGENT_TOOLS`，侧栏显示的就是实际生效的那份） + 4 道安全阀 + 熔断；不可答问题从 7 步/30317 token 降到 4 步/6514 token |
+| 交付物 | 规划 → 子任务 → 合并 → 冲突 → 渲染；并行执行（手写 `asyncio.gather`，**保序**）实测 n=18：墙钟 **−46%**（逐题配对中位数 0.537）、token +0.5%、36 次 0 error；**未迁 LangGraph**，理由与定价见 [ADR-001](docs/adr_001_orchestration.md) |
 | 多库路由 | 三态（库内/越界/未提及）；越界走无工具单轮，实测 0 步 / 1.1s，库内 3–5 步 / 5–8s |
 | MCP | 4 个工具以标准 MCP（SDK 2.3.0）暴露给外部 host，stdio 传输；**适配层与内置实现输出逐字符一致由守卫实跑保证**（16 项，真 `mcp.Client` 连真 server）。MCP 是**独立 server 入口**，本项目 Agent 始终走进程内直调，**两者之间没有运行时开关**（曾经有过 `TOOL_TRANSPORT`，核实发现无任何代码分支读它，已删），见 [docs/mcp.md](docs/mcp.md) |
 | 后端 | FastAPI，`/api/health` `/api/retrieve` `/api/chat` `/api/chat/stream` `/api/runs` `/api/runs/{run_id}` `/api/deliverable` `/api/ingest` `/api/stats` |
