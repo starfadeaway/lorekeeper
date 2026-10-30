@@ -57,6 +57,7 @@
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import re
@@ -853,6 +854,24 @@ class DeliverableAgent:
         return st
 
     # ---------------- 主流程 ---------------- #
+    async def _execute_plan(
+        self, plan: list[dict], ctx: ToolContext, subject: str
+    ) -> list[SubtaskResult]:
+        """跑完一整份计划，返回**与 plan 同序**的子任务结果。
+
+        这是 P1「串行 vs 并行」唯一需要替换的接缝：合并、冲突、渲染全在
+        计划跑完之后，所以并行版只要重写这一个方法，其余（纯函数区）不动。
+
+        **顺序契约**：返回列表必须与 plan 一一对应、顺序一致 ——
+        产物顺序 = 计划顺序，不能变成"谁先跑完谁在前"。
+        并行版用 `asyncio.gather` 天然保序，但这条必须由调用方守住，
+        否则两次运行之间段落顺序都会漂移，而且不报错。
+        """
+        out: list[SubtaskResult] = []
+        for spec in plan:
+            out.append(await self._run_subtask(spec, ctx, subject))
+        return out
+
     async def run(self, question: str, *, game: str | None = None) -> DeliverableResult:
         t0 = time.perf_counter()
         ctx = self.ctx or ToolContext.build(game or self.s.game_primary)
@@ -865,8 +884,7 @@ class DeliverableAgent:
         # 时间戳用**本地时间**且不带时区后缀，理由见 `_stamp_now` 的 docstring。
         res.topic, subject, plan = await self.plan(question)
         res.subject = subject
-        for spec in plan:
-            res.subtasks.append(await self._run_subtask(spec, ctx, subject))
+        res.subtasks = await self._execute_plan(plan, ctx, subject)
 
         res.conflicts = detect_conflicts([f for st in res.subtasks for f in st.facts])
         res.elapsed_ms = int((time.perf_counter() - t0) * 1000)
@@ -906,3 +924,49 @@ class DeliverableAgent:
             ),
         }
         return res
+
+
+class ParallelDeliverableAgent(DeliverableAgent):
+    """并行版：子任务同时跑，**产物顺序仍按计划**。
+
+    这是 P1 的对照臂（ADR-001 §11），不是生产路径 —— `main.py` 仍挂
+    `DeliverableAgent`。它存在的唯一目的是回答一个问题：
+    把 `_run_subtask` 的串行 for 换成 `asyncio.gather`，墙钟能省多少、
+    token 与答案会不会变。
+
+    ## 为什么只重写 `_execute_plan`
+
+    合并 / 冲突检测 / 渲染 / meta 统计全部依赖"计划跑完之后"的状态，
+    与"怎么跑计划"无关。只替换这一个方法，串行版与并行版之间就只剩
+    **调度方式**一个变量 —— 否则两版的产物差异无法归因。
+
+    ## 为什么用 gather 而不是 TaskGroup
+
+    `gather` **按入参顺序返回结果**，与完成顺序无关；`TaskGroup` 只保证
+    异常传播语义，不保序。这里的顺序契约（产物顺序 = 计划顺序）比异常
+    语义重要：一个子任务失败已经在 `_run_subtask` 里降级成 status=error，
+    不会把整组拖垮。
+
+    ## 并发上限
+
+    `parallel_limit` 是**子任务级**闸门，不是入口级的 `_semaphore`：
+    后者挡的是"同时进来几个 HTTP 请求"，管不住单个请求内部 fan-out 出
+    4 个子任务、每个子任务再各发 2–4 次检索 + 1 次抽取。
+    """
+
+    def __init__(self, *, parallel_limit: int = 4, **kwargs) -> None:
+        super().__init__(**kwargs)
+        if parallel_limit < 1:
+            raise ValueError("parallel_limit 必须 ≥ 1")
+        self.parallel_limit = parallel_limit
+
+    async def _execute_plan(
+        self, plan: list[dict], ctx: ToolContext, subject: str
+    ) -> list[SubtaskResult]:
+        sem = asyncio.Semaphore(self.parallel_limit)
+
+        async def one(spec: dict) -> SubtaskResult:
+            async with sem:
+                return await self._run_subtask(spec, ctx, subject)
+
+        return list(await asyncio.gather(*(one(spec) for spec in plan)))

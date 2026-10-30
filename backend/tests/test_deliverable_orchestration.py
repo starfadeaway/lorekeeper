@@ -48,10 +48,16 @@
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import re
 
-from app.agent.deliverable import DeliverableAgent, build_json, render_markdown
+from app.agent.deliverable import (
+    DeliverableAgent,
+    ParallelDeliverableAgent,
+    build_json,
+    render_markdown,
+)
 from app.agent.tools import ToolContext
 from app.retrieval.hybrid import RetrievalHit
 from app.store.types import RetrievedChunk
@@ -96,16 +102,46 @@ class FakeRetriever:
     """
 
     def __init__(self, hits_by_query: dict[str, list[RetrievalHit]] | None = None,
-                 *, error_for: set[str] | None = None) -> None:
+                 *, error_for: set[str] | None = None,
+                 delay_for: dict[str, float] | None = None) -> None:
         self.hits_by_query = hits_by_query or {}
         self.error_for = error_for or set()
+        self.delay_for = delay_for or {}
         self.queries: list[str] = []
 
     async def retrieve(self, query, config):  # noqa: ANN001 - 与 HybridRetriever 同形状
         self.queries.append(query)
         if query in self.error_for:
             raise RuntimeError("retriever down")
+        if query in self.delay_for:
+            await asyncio.sleep(self.delay_for[query])
         return list(self.hits_by_query.get(query, []))
+
+
+class PromptAwareLLM:
+    """按 **prompt 内容**回答，而不是按调用顺序。
+
+    `FakeLLM` 是脚本式的（第 N 次调用返回第 N 条）—— 串行下没问题，
+    并行下调用顺序会变，抽取结果就会被发给错误的子任务。
+    这个替身按 prompt 里的「目标：…」分派，因此串行与并行拿到同一组成分，
+    产物才有资格逐字比对。
+    """
+
+    def __init__(self, plan_payload: str, facts_by_goal: dict[str, list[dict]]) -> None:
+        self.plan_payload = plan_payload
+        self.facts_by_goal = facts_by_goal
+        self.calls: list[str] = []
+
+    async def chat(self, messages, **kw):  # noqa: ANN001 - 满足 LLMClient 形状
+        prompt = messages[-1]["content"]
+        self.calls.append(prompt)
+        usage = {"prompt_tokens": 100, "completion_tokens": 20}
+        if "拆成 3-6" in prompt:
+            return {"content": self.plan_payload, "tool_calls": [], "usage": usage}
+        for goal, facts in self.facts_by_goal.items():
+            if f"目标：{goal}" in prompt:
+                return {"content": facts_json(*facts), "tool_calls": [], "usage": usage}
+        raise AssertionError(f"PromptAwareLLM 收到未知 prompt：{prompt[:80]!r}")
 
 
 def plan_json(subtasks: list[dict], *, topic: str = "三月七养成指南",
@@ -476,3 +512,69 @@ async def test_计划最多六个子任务(settings):
 
     assert res.meta["subtasks_total"] == 6
     assert [s.name for s in res.subtasks] == [f"任务{i}" for i in range(6)]
+
+
+# --------------------------------------------------------------------------- #
+# 6. 并行对照（P1）：并行不改变产物
+# --------------------------------------------------------------------------- #
+def _parallel_fixture(settings, *, delay_for: dict[str, float] | None = None):
+    """三个子任务、三份事实；并行版最多同时跑三个。"""
+    plan_payload = plan_json([
+        {"name": "甲", "goal": "g1", "queries": ["q1"]},
+        {"name": "乙", "goal": "g2", "queries": ["q2"]},
+        {"name": "丙", "goal": "g3", "queries": ["q3"]},
+    ])
+    facts_by_goal = {
+        "g1": [{"i": 1, "key": "k1", "label": "l1", "value": "v1"}],
+        "g2": [{"i": 1, "key": "k2", "label": "l2", "value": "v2"}],
+        "g3": [{"i": 1, "key": "k3", "label": "l3", "value": "v3"}],
+    }
+    hits = {
+        "q1": [hit("三月七", "一")],
+        "q2": [hit("三月七", "二")],
+        "q3": [hit("三月七", "三")],
+    }
+
+    def build(agent_cls, **kwargs):
+        retriever = FakeRetriever(hits, delay_for=delay_for)
+        llm = PromptAwareLLM(plan_payload, facts_by_goal)
+        ctx = ToolContext(
+            settings=settings, retriever=retriever, store=None,
+            game="sr", disclose_revision=True,
+        )
+        return agent_cls(settings=settings, llm=llm, ctx=ctx, top_k=5, **kwargs), retriever
+
+    return build
+
+
+async def test_并行与串行产出逐字相同(settings):
+    """P1 的第一个问题：把串行 for 换成 gather，产物会不会变？
+
+    这是"并行不改变语义"在控制流层的证明；真实 API 下的行为层
+    只能按"归一化 + 比率 + 噪声底"判（见 ADR-001 §8）。
+    """
+    build = _parallel_fixture(settings)
+    serial, serial_retriever = build(DeliverableAgent)
+    parallel, parallel_retriever = build(ParallelDeliverableAgent, parallel_limit=3)
+
+    a = await serial.run("整理三月七的养成指南")
+    b = await parallel.run("整理三月七的养成指南")
+
+    assert canonical(a) == canonical(b)
+    assert sorted(serial_retriever.queries) == sorted(parallel_retriever.queries)
+
+
+async def test_并行产物顺序仍按计划(settings):
+    """让第一个子任务最慢 —— 产物顺序必须是计划顺序，不是完成顺序。
+
+    并行最常见的回归不是"结果错了"，而是"段落顺序在两次运行之间漂移"，
+    而它不会报错。
+    """
+    build = _parallel_fixture(settings, delay_for={"q1": 0.05})
+    parallel, _ = build(ParallelDeliverableAgent, parallel_limit=3)
+    res = await parallel.run("整理三月七的养成指南")
+
+    assert [s.name for s in res.subtasks] == ["甲", "乙", "丙"]
+    assert [f.value for s in res.subtasks for f in s.facts] == ["v1", "v2", "v3"]
+    md, _ = canonical(res)
+    assert md.index("### 甲") < md.index("### 乙") < md.index("### 丙")
