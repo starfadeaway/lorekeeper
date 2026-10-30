@@ -257,7 +257,7 @@ LanceDB 0.40 的 `create_index(metric="cosine")` 已废弃，它建的是 IVF-PQ
 **是什么**：Reason + Act 的循环 —— 让模型交替进行「推理」和「调用工具」，
 直到它认为信息足够、给出最终答案。
 
-**用在哪**：`agent/react.py`（约 380 行，手写不依赖 LangGraph）。
+**用在哪**：`agent/react.py`（1,144 行；主循环 `_run_once` 84 行，手写不依赖 LangGraph）。
 
 **为什么不用框架**：JD 明确写了"关注上下文、工具调度、运行状态、异常处理
 和效果评测，而不只是完成模型 API 调用"。手写能把这些点全部暴露出来。

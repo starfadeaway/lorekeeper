@@ -14,7 +14,7 @@
 | Embedding 模型对比（**三库逐库** D，n=29/9/10） | **保留 bge-m3**，依据是 reranker 配套而非质量：A2 融合档跨模型配对 **p=0.6743 无法区分**，且三库方向互相矛盾（sr Qwen 略优 0.810→0.822 / ys 打平 1.000 / zzz bge 优 0.850→1.000）。Qwen 在融合档显著更快（sr −28ms，p<1e-10） | [`data/eval/exp_D_*_k3.json`](data/eval) · [`EVALUATION.md`](EVALUATION.md) |
 | 假前提题（幻觉测试） | 无检索 3.83 → 有检索 **5.00**（模型学会"明确说不知道"） | 同上 |
 | Chat 基座对比（**三库逐库**，n=15/12/12，DeepSeek⇄MiniMax，judge 为 n_ok 口径） | ⚠️ **三库均未达显著**（Δ=−0.70 / −0.16 / −0.38，p=0.070/0.674/0.283），**不敢说谁更强**。成本三库一致：MiniMax prompt token ×1.55~2.85、延迟 ×2.56~3.65。两者失败模式**互补** | [`data/eval/exp_E_{sr,ys,zzz}.json`](data/eval) · [`EVALUATION.md`](EVALUATION.md) |
-| 代价 | 挂知识库 = prompt token **×9.8**（当前 sr，n_ok 均值口径；legacy 单库 15 条口径是 ×19.9）、延迟约 3.5 倍（并发 2 下含排队，**不可与串行数字比**）。C2 比 C1 多花 **+17.2%** token 而 judge **反而低 0.13**（4.72→4.59）—— 这正是「生产只开 `search_kb`」的依据 | [`data/eval/exp_C_sr.json`](data/eval) · [`docs/cost_latency_quality.md`](docs/cost_latency_quality.md) |
+| 代价 | 挂知识库 = prompt token **×19.3**、C2 比 C1 再多 **+23%**（均**三库配对** n=46；sr 单库 n_ok 均值口径是 ×9.8 / +17.2%）、延迟约 3.5 倍（并发 2 下含排队，**不可与串行数字比**）。**judge 分数打平**：C1→C2 三库配对 Δ=**0.000**（n=48，p=1.0）—— 另开 3 个工具只买到成本与步数，买不到分数。⚠️ A/A 实测**同实现重跑**时单题 judge 分就抖 0.75～3.0（`exp_G_aa_noise.json`），所以任何 0.1 分量级的差异都读不出来 —— 这正是「生产只开 `search_kb`」的依据 | [`data/eval/exp_C_sr_ys_zzz.json`](data/eval) · [`docs/cost_latency_quality.md`](docs/cost_latency_quality.md) |
 | 并发（真实问题压测） | 并发 4 吞吐 **×3.40**（4.10 req/s），1/4/8 三档 top-5 结果**逐条一致** | [`docs/concurrency.md`](docs/concurrency.md) |
 | 流式 | 首个 SSE 事件 **860ms** vs 非流式全量 3410ms，总耗时仅差 264ms。⚠ **不是「第一个字」**：上游无 token 级流式，是拿完整答案后切片推送；且为单次测量 | [`data/eval/probe_stream_latency.json`](data/eval) |
 | 失败模式 | 4 类，含「答案全对但引用了不存在的页面」。**已实现生成后引用校验**：L1 剥掉无检索证据的页面引用、L2 记录无出处的数值（不改文本）；语义级（L3）未做 | [`docs/failure_analysis.md`](docs/failure_analysis.md) |
@@ -104,6 +104,7 @@ git commit、Python 版本、平台，以及当时的测量条件**（并发度�
 | `docs/fallback_chain.md` | **LLM 降级链** —— 哪些故障值得换模型、哪些换也没用、降级为什么必须显形 |
 | `docs/delta_sync.md` | **版本更新怎么做** —— 增量同步的实测口径、chunk 级脏数据陷阱、为什么先落内容指纹再动增量 |
 | `docs/experiments.md` | **六个实验各在想证明什么、结果里每列是什么意思**（详述 A–E；F 见 `EVALUATION.md` 的「实验 F」章节）—— 忘了当初为什么做实验就看这个 |
+| `docs/adr_001_orchestration.md` | **ADR-001：Agent 编排层框架选型** —— chat 为什么冻结手写、deliverable 为什么改用 LangGraph；含判据、验收标准与可辩论分歧点 |
 | `EVALUATION.md` | 实验数据与结论，含方法论教训 |
 
 ---
@@ -115,7 +116,7 @@ git commit、Python 版本、平台，以及当时的测量条件**（并发度�
    ↓
 关键词路由（确定性，不用 LLM）
    ↓
-┌──────────── ReAct 循环（手写，约 380 行 async）────────────┐
+┌──────────────ReAct 循环（手写，主循环 84 行）──────────────┐
 │  模型决策 → 工具调用 → 结果回填 → 再决策 … 直到作答或触顶安全阀 │
 │  + 熔断：查询指纹去重、连续低置信度直接回填「未收录」          │
 └────────────────────────────────────────────────────────────┘
