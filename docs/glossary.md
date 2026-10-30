@@ -578,6 +578,43 @@ checkpoint = 把每步状态存下来，挂了能从断点续跑；durable execu
 
 ---
 
+## 框架层（LangChain / LangGraph / LlamaIndex）
+
+### LangChain
+
+**是什么**：LLM 应用开发框架，把 prompt、工具、记忆、检索器、Agent 等组件抽象成可组合的
+`Runnable`（LCEL），生态最大、集成最多。
+
+**本项目关系**：**未用于生产**。评估过用 `langchain-openai` 替换自研 `llm/client.py`，
+会丢掉降级链与故障分类、MiniMax `<think>` 剥除、内联工具调用兜底、以及 rerank 的裸 HTTP 协议
+（见 ADR-001 附录 B.1）——即"多一个依赖、少四条行为"。
+
+---
+
+### LangGraph
+
+**是什么**：LangChain 团队的**低层编排框架**，用"有状态的图"（节点 + 边 + 状态）描述
+agent 工作流，提供 checkpoint / 持久化、HITL（`interrupt`）、流式与断点恢复。
+1.2 起 prebuilt 的 `create_react_agent` 迁到 `langchain.agents`，等于"开箱即用的 ReAct"没了。
+
+**本项目关系**：做过**对照臂**（`react_langgraph.py`）与 A/A 噪声底；交付物并行用
+`asyncio.gather` 已拿到 **−46%** 墙钟、token **+0.5%**（n=18），剩余三缺口手写 4–5.5 天
+vs 框架 8–10 天 → **不迁**（ADR-001 §13）。保留对照臂，作为"评估过框架边界"的证据。
+
+---
+
+### LlamaIndex
+
+**是什么**：retrieval-first 的数据框架，强项在 ingestion / 索引 / 查询引擎 /
+混合检索（BM25 + 向量 + RRF）与重排，RAG 管道开箱即用。
+
+**本项目关系**：检索链与入库都是针对性实现 —— MediaWiki 抓取、wikitext 模板展平、
+按小节 + 句界分块、确定性 `chunk_id`、两级内容指纹 + 三级增量。
+LlamaIndex 能替的只有"切块 → embed → upsert"约 40 行，其余（尤其模板展平）它没有对应实现；
+换掉等于把 A–F 实验的可比性前提一起换掉（ADR-001 §4.3 / 附录 B.2）。
+
+---
+
 ## 快速对照表
 
 | 想知道 | 看哪 |
