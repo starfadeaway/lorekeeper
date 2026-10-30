@@ -859,6 +859,17 @@ class ReActAgent:
         # 评测里才能区分"查了但被熔断"和"查了很慢"。
         if not ok:
             state.tool_failures += 1
+            # 失败必须留痕。工具的错误文本此前只喂给模型；MySQL 不可用时
+            # `save_run` 会静默返回 False，前端又只显示「0ms · N 字符」——
+            # 线上排查等于零证据。这里记下工具名 / 参数摘要 / 错误首行，
+            # 熔断拦截是预期行为，降一级到 INFO，避免刷屏。
+            log = logger.info if blocked is not None else logger.warning
+            log(
+                "工具失败 %s args=%s: %s",
+                call["name"],
+                str(call["args"]).replace("\n", " ")[:160],
+                (text.splitlines()[0] if text else "")[:160],
+            )
         # rec.step 用当前 steps 长度当序号，前提是**每个 call 恰好 append 一条** ——
         # 包括熔断拦下的那步。不记它就看不出模型被拦过，而模型并不知道自己被拦了
         # （它只是读到一段文本）。
@@ -1086,7 +1097,10 @@ class ReActAgent:
                     text, rec = await self._exec_call(call, context, guard, state)
                     yield {
                         "event": "tool_end",
-                        "data": {"name": call["name"], "ok": rec.ok, "ms": rec.latency_ms, "chars": rec.result_chars},
+                        "data": {"name": call["name"], "ok": rec.ok, "ms": rec.latency_ms, "chars": rec.result_chars,
+                                 # 失败原因随事件下发：前端只显示「红点 + 字符数」
+                                 # 时，用户根本不知道错在哪。成功时为 None，不占带宽。
+                                 "error": None if rec.ok else (rec.error or "")},
                     }
                     # 与非流式路径同一个入口：注入检测不能只在一个接口上生效。
                     messages.append(self._tool_result_message(call, text, state))

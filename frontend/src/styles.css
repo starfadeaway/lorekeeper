@@ -444,6 +444,7 @@ body {
   align-items: center;
   gap: 9px;
   font-size: 12px;
+  flex-wrap: wrap;
 }
 .tl-dot {
   width: 7px;
@@ -489,6 +490,17 @@ body {
   flex: 0 0 auto;
   color: var(--muted);
   font-family: var(--mono);
+}
+/* 失败原因单独占一行，跟工具描述错开，避免把一行挤爆 */
+.tl-error {
+  flex: 0 0 100%;
+  margin-left: 16px;
+  color: var(--bad);
+  font-family: var(--mono);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .spinner {

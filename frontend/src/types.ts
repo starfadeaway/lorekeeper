@@ -47,7 +47,7 @@ export interface RetrieveResponse {
 /** SSE 事件：与后端 agent/react.py 里 yield 的 event 名一一对应 */
 export type StreamEvent =
   | { event: 'tool_start'; data: { name: string; args: Record<string, unknown> } }
-  | { event: 'tool_end'; data: { name: string; ok: boolean; ms: number; chars: number } }
+  | { event: 'tool_end'; data: { name: string; ok: boolean; ms: number; chars: number; error?: string | null } }
   | { event: 'token'; data: { text: string } }
   | { event: 'limit'; data: { reason: string } }
   /** 路由判定为「用户问的是未收录的游戏」，接下来会直接给边界说明 */
@@ -106,6 +106,8 @@ export interface ToolCallView {
   ok?: boolean
   ms?: number
   chars?: number
+  /** 失败原因（工具返回文本的首行）。成功时为 null/undefined —— 后端只在失败时下发。 */
+  error?: string | null
 }
 
 export interface Ref {

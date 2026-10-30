@@ -220,7 +220,8 @@ function handleEvent(
         ...t,
         tools: t.tools.map((tool, i) =>
           i === idx
-            ? { ...tool, running: false, ok: ev.data.ok, ms: ev.data.ms, chars: ev.data.chars }
+            ? { ...tool, running: false, ok: ev.data.ok, ms: ev.data.ms, chars: ev.data.chars,
+                error: ev.data.error ?? null }
             : tool,
         ),
       }
