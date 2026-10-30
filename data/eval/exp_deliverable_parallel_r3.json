@@ -1,0 +1,326 @@
+[
+ {
+  "label": "P1-parallel",
+  "rows": [
+   {
+    "case_id": "dlv-sr-01",
+    "impl": "serial",
+    "position": 0,
+    "wall_ms": 9509,
+    "prompt_tokens": 15801,
+    "completion_tokens": 1239,
+    "llm_calls": 6,
+    "plan_size": 0,
+    "subtasks_total": 5,
+    "subtasks_ok": 1,
+    "subtasks_empty": 4,
+    "subtasks_error": 0,
+    "subtasks_truncated": 0,
+    "facts_total": 18,
+    "subtask_ms_sum": 7676,
+    "statuses": [
+     "ok",
+     "empty",
+     "empty",
+     "empty",
+     "empty"
+    ]
+   },
+   {
+    "case_id": "dlv-sr-01",
+    "impl": "parallel",
+    "position": 1,
+    "wall_ms": 5077,
+    "prompt_tokens": 13615,
+    "completion_tokens": 1109,
+    "llm_calls": 5,
+    "plan_size": 0,
+    "subtasks_total": 4,
+    "subtasks_ok": 1,
+    "subtasks_empty": 3,
+    "subtasks_error": 0,
+    "subtasks_truncated": 0,
+    "facts_total": 18,
+    "subtask_ms_sum": 6734,
+    "statuses": [
+     "ok",
+     "empty",
+     "empty",
+     "empty"
+    ]
+   },
+   {
+    "case_id": "dlv-sr-02",
+    "impl": "parallel",
+    "position": 0,
+    "wall_ms": 6705,
+    "prompt_tokens": 16894,
+    "completion_tokens": 1159,
+    "llm_calls": 6,
+    "plan_size": 0,
+    "subtasks_total": 5,
+    "subtasks_ok": 1,
+    "subtasks_empty": 4,
+    "subtasks_error": 0,
+    "subtasks_truncated": 0,
+    "facts_total": 20,
+    "subtask_ms_sum": 13726,
+    "statuses": [
+     "ok",
+     "empty",
+     "empty",
+     "empty",
+     "empty"
+    ]
+   },
+   {
+    "case_id": "dlv-sr-02",
+    "impl": "serial",
+    "position": 1,
+    "wall_ms": 10353,
+    "prompt_tokens": 16481,
+    "completion_tokens": 1122,
+    "llm_calls": 6,
+    "plan_size": 0,
+    "subtasks_total": 5,
+    "subtasks_ok": 1,
+    "subtasks_empty": 4,
+    "subtasks_error": 0,
+    "subtasks_truncated": 0,
+    "facts_total": 19,
+    "subtask_ms_sum": 8326,
+    "statuses": [
+     "ok",
+     "empty",
+     "empty",
+     "empty",
+     "empty"
+    ]
+   },
+   {
+    "case_id": "dlv-sr-03",
+    "impl": "serial",
+    "position": 0,
+    "wall_ms": 12545,
+    "prompt_tokens": 10207,
+    "completion_tokens": 1687,
+    "llm_calls": 4,
+    "plan_size": 0,
+    "subtasks_total": 3,
+    "subtasks_ok": 3,
+    "subtasks_empty": 0,
+    "subtasks_error": 0,
+    "subtasks_truncated": 0,
+    "facts_total": 26,
+    "subtask_ms_sum": 10967,
+    "statuses": [
+     "ok",
+     "ok",
+     "ok"
+    ]
+   },
+   {
+    "case_id": "dlv-sr-03",
+    "impl": "parallel",
+    "position": 1,
+    "wall_ms": 5399,
+    "prompt_tokens": 9447,
+    "completion_tokens": 1264,
+    "llm_calls": 4,
+    "plan_size": 0,
+    "subtasks_total": 3,
+    "subtasks_ok": 3,
+    "subtasks_empty": 0,
+    "subtasks_error": 0,
+    "subtasks_truncated": 0,
+    "facts_total": 18,
+    "subtask_ms_sum": 7558,
+    "statuses": [
+     "ok",
+     "ok",
+     "ok"
+    ]
+   },
+   {
+    "case_id": "dlv-sr-04",
+    "impl": "parallel",
+    "position": 0,
+    "wall_ms": 7389,
+    "prompt_tokens": 14321,
+    "completion_tokens": 2776,
+    "llm_calls": 5,
+    "plan_size": 0,
+    "subtasks_total": 4,
+    "subtasks_ok": 4,
+    "subtasks_empty": 0,
+    "subtasks_error": 0,
+    "subtasks_truncated": 0,
+    "facts_total": 37,
+    "subtask_ms_sum": 17478,
+    "statuses": [
+     "ok",
+     "ok",
+     "ok",
+     "ok"
+    ]
+   },
+   {
+    "case_id": "dlv-sr-04",
+    "impl": "serial",
+    "position": 1,
+    "wall_ms": 14118,
+    "prompt_tokens": 14321,
+    "completion_tokens": 3277,
+    "llm_calls": 5,
+    "plan_size": 0,
+    "subtasks_total": 4,
+    "subtasks_ok": 4,
+    "subtasks_empty": 0,
+    "subtasks_error": 0,
+    "subtasks_truncated": 0,
+    "facts_total": 44,
+    "subtask_ms_sum": 12418,
+    "statuses": [
+     "ok",
+     "ok",
+     "ok",
+     "ok"
+    ]
+   },
+   {
+    "case_id": "dlv-sr-05",
+    "impl": "serial",
+    "position": 0,
+    "wall_ms": 23250,
+    "prompt_tokens": 21645,
+    "completion_tokens": 3505,
+    "llm_calls": 7,
+    "plan_size": 0,
+    "subtasks_total": 6,
+    "subtasks_ok": 4,
+    "subtasks_empty": 2,
+    "subtasks_error": 0,
+    "subtasks_truncated": 0,
+    "facts_total": 53,
+    "subtask_ms_sum": 21610,
+    "statuses": [
+     "ok",
+     "ok",
+     "ok",
+     "ok",
+     "empty",
+     "empty"
+    ]
+   },
+   {
+    "case_id": "dlv-sr-05",
+    "impl": "parallel",
+    "position": 1,
+    "wall_ms": 8894,
+    "prompt_tokens": 20293,
+    "completion_tokens": 3258,
+    "llm_calls": 6,
+    "plan_size": 0,
+    "subtasks_total": 5,
+    "subtasks_ok": 5,
+    "subtasks_empty": 0,
+    "subtasks_error": 0,
+    "subtasks_truncated": 0,
+    "facts_total": 61,
+    "subtask_ms_sum": 20630,
+    "statuses": [
+     "ok",
+     "ok",
+     "ok",
+     "ok",
+     "ok"
+    ]
+   },
+   {
+    "case_id": "dlv-sr-06",
+    "impl": "parallel",
+    "position": 0,
+    "wall_ms": 8130,
+    "prompt_tokens": 19437,
+    "completion_tokens": 1623,
+    "llm_calls": 7,
+    "plan_size": 0,
+    "subtasks_total": 6,
+    "subtasks_ok": 3,
+    "subtasks_empty": 3,
+    "subtasks_error": 0,
+    "subtasks_truncated": 0,
+    "facts_total": 24,
+    "subtask_ms_sum": 18275,
+    "statuses": [
+     "ok",
+     "ok",
+     "ok",
+     "empty",
+     "empty",
+     "empty"
+    ]
+   },
+   {
+    "case_id": "dlv-sr-06",
+    "impl": "serial",
+    "position": 1,
+    "wall_ms": 10944,
+    "prompt_tokens": 19841,
+    "completion_tokens": 1314,
+    "llm_calls": 7,
+    "plan_size": 0,
+    "subtasks_total": 6,
+    "subtasks_ok": 2,
+    "subtasks_empty": 4,
+    "subtasks_error": 0,
+    "subtasks_truncated": 0,
+    "facts_total": 17,
+    "subtask_ms_sum": 8730,
+    "statuses": [
+     "ok",
+     "ok",
+     "empty",
+     "empty",
+     "empty",
+     "empty"
+    ]
+   }
+  ],
+  "aggregate": {
+   "serial": {
+    "impl": "serial",
+    "n": 6,
+    "median_wall_ms": 11744,
+    "mean_wall_ms": 13453,
+    "median_prompt_tokens": 16141,
+    "median_completion_tokens": 1500,
+    "facts_total": 177
+   },
+   "parallel": {
+    "impl": "parallel",
+    "n": 6,
+    "median_wall_ms": 7047,
+    "mean_wall_ms": 6932,
+    "median_prompt_tokens": 15607,
+    "median_completion_tokens": 1443,
+    "facts_total": 178
+   }
+  },
+  "_meta": {
+   "script": "exp_deliverable_parallel.py",
+   "generated_at": "2026-10-30T15:40:18+00:00",
+   "git_commit": "8a2854f",
+   "game": "sr",
+   "parallel_limit": 4,
+   "order": "ABBA（奇数题 serial→parallel、偶数题反向）",
+   "measured": [
+    "wall_ms",
+    "prompt_tokens",
+    "completion_tokens",
+    "facts_total"
+   ],
+   "not_measured": "答案质量（交付物无 gold；真实 API 需先过 A/A 噪声底）"
+  }
+ }
+]
