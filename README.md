@@ -14,7 +14,7 @@
 | Embedding 模型对比（**三库逐库** D，n=29/9/10） | **保留 bge-m3**，依据是 reranker 配套而非质量：A2 融合档跨模型配对 **p=0.6743 无法区分**，且三库方向互相矛盾（sr Qwen 略优 0.810→0.822 / ys 打平 1.000 / zzz bge 优 0.850→1.000）。Qwen 在融合档显著更快（sr −28ms，p<1e-10） | [`data/eval/exp_D_*_k3.json`](data/eval) · [`EVALUATION.md`](EVALUATION.md) |
 | 假前提题（幻觉测试） | 无检索 3.83 → 有检索 **5.00**（模型学会"明确说不知道"） | 同上 |
 | Chat 基座对比（**三库逐库**，n=15/12/12，DeepSeek⇄MiniMax，judge 为 n_ok 口径） | ⚠️ **三库均未达显著**（Δ=−0.70 / −0.16 / −0.38，p=0.070/0.674/0.283），**不敢说谁更强**。成本三库一致：MiniMax prompt token ×1.55~2.85、延迟 ×2.56~3.65。两者失败模式**互补** | [`data/eval/exp_E_{sr,ys,zzz}.json`](data/eval) · [`EVALUATION.md`](EVALUATION.md) |
-| 代价 | 挂知识库 = prompt token **×19.3**、C2 比 C1 再多 **+23%**（均**三库配对** n=46；sr 单库 n_ok 均值口径是 ×9.8 / +17.2%）、延迟约 3.5 倍（并发 2 下含排队，**不可与串行数字比**）。**judge 分数打平**：C1→C2 三库配对 Δ=**0.000**（n=48，p=1.0）—— 另开 3 个工具只买到成本与步数，买不到分数。⚠️ A/A 实测**同实现重跑**时单题 judge 分就抖 0.75～3.0（`exp_G_aa_noise.json`），所以任何 0.1 分量级的差异都读不出来 —— 这正是「生产只开 `search_kb`」的依据 | [`data/eval/exp_C_sr_ys_zzz.json`](data/eval) · [`docs/cost_latency_quality.md`](docs/cost_latency_quality.md) |
+| 代价 | 挂知识库 = prompt token **×19.3**、C2 比 C1 再多 **+23%**（均**三库配对** n=46；sr 单库 n_ok 均值口径是 ×9.8 / +17.2%）、延迟约 3.5 倍（并发 2 下含排队，**不可与串行数字比**）。**judge 分数打平**：C1→C2 三库配对 Δ=**0.000**（n=48，p=1.0）—— 另开 3 个工具只买到成本与步数，买不到分数。⚠️ A/A 实测**同实现重跑**时单题 judge 分就抖 0.357～1.5（判定成功的 7 对；另 8 对因 Judge 超时不可比，`exp_G_aa_noise.json`），所以任何 0.1 分量级的差异都读不出来 —— 这正是「生产只开 `search_kb`」的依据 | [`data/eval/exp_C_sr_ys_zzz.json`](data/eval) · [`docs/cost_latency_quality.md`](docs/cost_latency_quality.md) |
 | 并发（真实问题压测） | 并发 4 吞吐 **×3.40**（4.10 req/s），1/4/8 三档 top-5 结果**逐条一致** | [`docs/concurrency.md`](docs/concurrency.md) |
 | 流式 | 首个 SSE 事件 **860ms** vs 非流式全量 3410ms，总耗时仅差 264ms。⚠ **不是「第一个字」**：上游无 token 级流式，是拿完整答案后切片推送；且为单次测量 | [`data/eval/probe_stream_latency.json`](data/eval) |
 | 失败模式 | 4 类，含「答案全对但引用了不存在的页面」。**已实现生成后引用校验**：L1 剥掉无检索证据的页面引用、L2 记录无出处的数值（不改文本）；语义级（L3）未做 | [`docs/failure_analysis.md`](docs/failure_analysis.md) |
@@ -539,7 +539,7 @@ cd lorekeeper\backend
 | 评测 | 评测集 **56 条三库全覆盖**（星铁 32 / 绝区零 12 / 原神 12）；实验 A/B/C/D/E/F 均已出真实数据（F 另立 8 条溯源题集，不进主评测集） |
 | 检索实验覆盖 | **A / B / D 均已扩到三库**（sr 29 / ys 9 / zzz 10 = 48 条有 gold 的题），汇总按库分节、逐库配对检验，不混口径 |
 | 已知偏差 | 无。`eval_cases` 表已是 **56 条**（sr 32 / ys 12 / zzz 12），与代码里的评测集逐条一致（2026-10 实查） |
-| 工程 | pytest **777 项**全绿（含故障注入 23 + 引用校验 43 + 接线守卫 15 + 产物可观测 8）；smoke 自检 41 项；ruff 全仓清；前端 vitest **65 项**；GitHub Actions 跑 pytest + ruff + 冒烟自检 + 前端测试与构建 + 密钥卫生 |
+| 工程 | pytest **830 项**全绿（含故障注入 23 + 引用校验 43 + 接线守卫 15 + 产物可观测 8）；smoke 自检 41 项；ruff 全仓清；前端 vitest **65 项**；GitHub Actions 跑 pytest + ruff + 冒烟自检 + 前端测试与构建 + 密钥卫生 |
 
 一条命令自检：
 

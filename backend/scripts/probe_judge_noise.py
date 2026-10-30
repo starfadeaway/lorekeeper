@@ -16,14 +16,19 @@
 
 ## 为什么必须测
 
-简历上「全工具档 judge 反低 0.13」这类量级的结论，
-在没有噪声底之前是无法辩护的：
+简历上任何 **judge 类数字**（分数差、增益、涨跌幅）在没有噪声底之前都是无法辩护的：
 分不清「这一档真的更差」和「Judge 这次手抖」，
 数字就只是读数，不是结论。
 
 而项目自己的 `exp_common.judge_failed()` 已经在处理更极端的一种抖动 ——
 **Judge 调用直接超时**（记 `judge_error:APITimeoutError`，分数兜成 0）。
-实测 15 题里出现 4 次（见 `exp_G_aa_noise.json` 的 meta）。
+实测比例见 `exp_G_aa_noise.json` 的 `aggregate.judge` 一节
+（`n_failed_pairs` / `failed_case_ids`）。
+
+⚠️ 本脚本第一版把 `as_dict()` 当成有 `judge_reason` 键去读 ——
+`as_dict()` 的键是 **`reason`**，读错会**静默**拿到 None，
+失败对于是混进均值，把「抖动幅度」算大。现在按 `reason` 读、
+失败对剔除并单列。
 
 ## 用法
 
@@ -49,7 +54,27 @@ from app.eval.cases import ALL_CASES  # noqa: E402
 from app.eval.judge import Judge, contexts_from_hits  # noqa: E402
 from app.llm.client import get_llm  # noqa: E402
 from app.retrieval.hybrid import RetrievalConfig  # noqa: E402
-from exp_common import EVAL_DIR, build_meta, is_kept, judge_failed, save  # noqa: E402
+from exp_common import (  # noqa: E402
+    EVAL_DIR,
+    JUDGE_ERROR_PREFIX,
+    build_meta,
+    is_kept,
+    judge_failed,
+    save,
+)
+
+
+def judge_failed_reason(reason: str | None) -> bool:
+    """这次 Judge 调用是不是**失败**了（超时 / 限流 / 输出解析失败）。
+
+    ⚠️ 键名坑：`JudgeScore.as_dict()` 的键是 **`reason`**，没有 `judge_reason`。
+    `judge_reason` 是 `exp_common.case_row` 摊进 row 之后才有的名字。
+    读错键名会**静默**拿到 None —— 于是失败看起来像「打了 0 分」，
+    混进均值把「Judge 抖动」这个数算大。
+
+    失败对必须剔除：一边失败时「真分 − 兜底 0」不是抖动，是链路故障。
+    """
+    return str(reason or "").startswith(JUDGE_ERROR_PREFIX)
 
 
 async def main() -> None:
@@ -107,35 +132,52 @@ async def main() -> None:
         s2 = await judge.score(question=case.question, gold=case.gold_answer,
                                answer=r.get("answer") or "", contexts=contexts)
         d1, d2 = s1.as_dict(), s2.as_dict()
+        # 失败必须留痕且必须剔除 —— 一边超时时「真分 − 兜底 0」不是抖动。
+        f1, f2 = judge_failed_reason(d1.get("reason")), judge_failed_reason(d2.get("reason"))
+        valid = not (f1 or f2)
         row = {
             "case_id": case.case_id,
             "orig_judge_score": r.get("judge_score"),
             "p1": d1,
             "p2": d2,
-            "delta_score": (d1.get("judge_score") or 0) - (d2.get("judge_score") or 0),
-            "delta_correctness": (d1.get("correctness") or 0) - (d2.get("correctness") or 0),
-            "delta_faithfulness": (d1.get("faithfulness") or 0) - (d2.get("faithfulness") or 0),
+            "p1_failed": f1,
+            "p2_failed": f2,
+            "valid": valid,
+            "delta_score": (d1.get("judge_score") - d2.get("judge_score")) if valid else None,
+            "delta_correctness": (d1.get("correctness") - d2.get("correctness")) if valid else None,
+            "delta_faithfulness": (d1.get("faithfulness") - d2.get("faithfulness")) if valid else None,
             "elapsed_ms": int((time.perf_counter() - t0) * 1000),
         }
         out_rows.append(row)
         partial.write_text(json.dumps({"rows": out_rows}, ensure_ascii=False, indent=2), encoding="utf-8")
-        print(
-            f"  {case.case_id:<9} {d1.get('judge_score')} / {d2.get('judge_score')}  "
-            f"Δ={row['delta_score']:+.3f}  (correctness {d1.get('correctness')}/{d2.get('correctness')}, "
-            f"faithfulness {d1.get('faithfulness')}/{d2.get('faithfulness')})",
-            flush=True,
-        )
+        if valid:
+            print(
+                f"  {case.case_id:<9} {d1.get('judge_score')} / {d2.get('judge_score')}  "
+                f"Δ={row['delta_score']:+.3f}  (correctness {d1.get('correctness')}/{d2.get('correctness')}, "
+                f"faithfulness {d1.get('faithfulness')}/{d2.get('faithfulness')})",
+                flush=True,
+            )
+        else:
+            print(
+                f"  {case.case_id:<9} judge 链路失败（p1_failed={f1} p2_failed={f2}）—— 不计入抖动统计",
+                flush=True,
+            )
 
-    n = len(out_rows) or 1
-    same = sum(1 for r in out_rows if abs(r["delta_score"]) < 1e-9)
-    absd = [abs(r["delta_score"]) for r in out_rows]
+    valid_rows = [r for r in out_rows if r["valid"]]
+    failed = [r for r in out_rows if not r["valid"]]
+    n = len(valid_rows) or 1
+    same = sum(1 for r in valid_rows if abs(r["delta_score"]) < 1e-9)
+    absd = sorted(abs(r["delta_score"]) for r in valid_rows)
     print("\n--- Judge 自身抖动 ---")
-    print(f"  n = {len(out_rows)}")
-    print(f"  两遍分数完全相同：{same}/{len(out_rows)}  ({same / n:.0%})")
-    print(f"  平均 |Δ| = {sum(absd) / n:.3f}   最大 |Δ| = {max(absd) if absd else 0:.3f}")
+    print(f"  跑 {len(out_rows)} 条，可比 {len(valid_rows)} 条，链路失败 {len(failed)} 条")
+    if failed:
+        print(f"  失败题号：{', '.join(r['case_id'] for r in failed)}")
+    print(f"  两遍分数完全相同：{same}/{len(valid_rows)}  ({same / n:.0%})")
     if absd:
-        srt = sorted(absd)
-        print(f"  |Δ| 中位数 = {srt[len(srt) // 2]:.3f}   P90 = {srt[int(len(srt) * 0.9)]:.3f}")
+        print(f"  平均 |Δ| = {sum(absd) / n:.3f}   最大 |Δ| = {max(absd):.3f}")
+        print(f"  |Δ| 中位数 = {absd[len(absd) // 2]:.3f}   P90 = {absd[int(len(absd) * 0.9)]:.3f}")
+    else:
+        print("  没有可比的对 —— 本轮 Judge 侧全失败，抖动测不出来")
 
     results = [{
         "label": "JUDGE-NOISE",
@@ -143,9 +185,12 @@ async def main() -> None:
         "source_label": args.label,
         "aggregate": {
             "n": len(out_rows),
+            "n_valid": len(valid_rows),
+            "n_failed": len(failed),
+            "failed_case_ids": [r["case_id"] for r in failed],
             "identical": same,
-            "mean_abs_delta": round(sum(absd) / n, 4),
-            "max_abs_delta": round(max(absd), 4) if absd else 0,
+            "mean_abs_delta": round(sum(absd) / n, 4) if absd else None,
+            "max_abs_delta": round(max(absd), 4) if absd else None,
         },
         "rows": out_rows,
     }]
