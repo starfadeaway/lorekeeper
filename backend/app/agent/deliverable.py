@@ -178,7 +178,7 @@ class Conflict:
 class SubtaskResult:
     name: str
     goal: str
-    status: str = "ok"          # ok / empty / error
+    status: str = "ok"          # ok / empty / error / truncated
     queries: list[str] = field(default_factory=list)
     facts: list[Fact] = field(default_factory=list)
     notes: str = ""
@@ -786,9 +786,16 @@ class DeliverableAgent:
         # 出处**不**由模型提供，而是按编号从 chunk 反查 ——
         # 所以模型没机会编造 URL，「抄错出处」这一整类问题从根上消失了。
         # 编号越界就整条丢弃：越界通常说明模型已经数错、跑偏了。
+        #
+        # **截断时一条事实都不采纳**：上面的 notes 已经承诺"未能采纳"，
+        # 而 `completion_tokens` 顶到上限意味着模型是被硬砍断的 ——
+        # 哪怕半截 JSON 恰好能解析，里面的数字也可能是写到一半的。
+        # 这里必须与 notes 同口径，否则同一份产物会同时出现在
+        # 「结构化事实」与「未能完成的子任务」两节里，读者不知道该信哪节。
         dropped = 0
         dropped_pages: set[str] = set()
-        for item in (data or {}).get("facts") or []:
+        fact_items = [] if truncated else (data or {}).get("facts") or []
+        for item in fact_items:
             if not isinstance(item, dict):
                 continue
             value = str(item.get("value") or "").strip()

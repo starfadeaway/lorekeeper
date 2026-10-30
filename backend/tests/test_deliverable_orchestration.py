@@ -282,9 +282,8 @@ async def test_输出被截断时标记truncated且不采纳事实(settings):
     所以截断必须是**独立 status**，不能混进 empty。
     """
     retriever = FakeRetriever({"三月七 属性": [hit("三月七", "生命值 1200")]})
-    # 真实的截断长什么样：JSON 没有闭合括号，_parse_json 只能返回 None。
-    # 这里刻意不用"完整 JSON + 顶满 usage"——那种组合在真实链路里不会出现
-    # （完整 JSON 意味着模型已经写完了），拿它当断言会钉住一个不存在的场景。
+    # 真实截断最常见的形态：JSON 没有闭合括号，_parse_json 只能返回 None。
+    # 「完整 JSON + 顶满 usage」的误报场景见下一个用例。
     cut_off = '{"facts": [{"i": 1, "key": "hp", "label": "生命值", "value": "120'
     script = [
         {"answer": plan_json([
@@ -299,6 +298,34 @@ async def test_输出被截断时标记truncated且不采纳事实(settings):
     assert res.subtasks[0].status == "truncated"
     assert res.subtasks[0].facts == []
     assert res.meta["subtasks_truncated"] == 1
+
+
+async def test_截断信号误报时也不得采纳事实(settings):
+    """`completion_tokens` 顶到上限、但 JSON 恰好完整 —— 误报场景。
+
+    这种组合在真实链路里很少见，但它是**唯一**能让「状态=truncated」
+    与「事实表里有值」同时成立的路径。口径只能有一个：
+    既然 notes 写"未能采纳"，事实表里就不能出现它，
+    否则同一份交付物会同时进「结构化事实」与「未能完成的子任务」两节，
+    读者无法判断该信哪一节 —— 而且没有任何报错。
+    """
+    retriever = FakeRetriever({"三月七 属性": [hit("三月七", "生命值 1200")]})
+    payload = facts_json({"i": 1, "key": "hp", "label": "生命值", "value": "1200"})
+    script = [
+        {"answer": plan_json([
+            {"name": "属性", "goal": "g1", "queries": ["三月七 属性"]},
+        ])},
+        {"answer": payload, "usage": {"prompt_tokens": 100, "completion_tokens": 2048}},
+        {"answer": payload, "usage": {"prompt_tokens": 100, "completion_tokens": 4096}},
+    ]
+    res = await make_agent(settings, script, retriever).run("整理三月七的养成指南")
+
+    assert res.subtasks[0].status == "truncated"
+    assert res.subtasks[0].facts == []
+    md = render_markdown(res)
+    assert "未能完成的子任务" in md
+    # 不能同时出现在事实表里 —— 这一行是这条用例的全部意义
+    assert "| 生命值 |" not in md
 
 
 async def test_证据编号越界的事实被整条丢弃(settings):
