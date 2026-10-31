@@ -21,7 +21,7 @@ JD 侧的事实（30 秒版）：
 | 事实 | 证据 |
 |---|---|
 | 两条在线路径形态完全不同：chat 是单轮 ReAct（库内应答 **6~8s**，SSE 流式），deliverable 是规划 + 3–6 个子任务（**40–60s，同步阻塞**） | `ARCHITECTURE.md` 第三节、`app/main.py` 的 `/api/deliverable` 注释 |
-| chat 有 SSE 事件契约、五条终止路径的 FakeLLM 测试与故障注入，另有 844 项测试整体兜底 | `backend/tests/`、`EVALUATION.md` |
+| chat 有 SSE 事件契约、五条终止路径的 FakeLLM 测试与故障注入，另有 845 项测试整体兜底 | `backend/tests/`、`EVALUATION.md` |
 | deliverable 只有纯函数层测试（36 条），**编排层零测试** | `test_deliverable_pure.py` |
 | deliverable 是串行执行：子任务数由规划器决定（`PLAN_PROMPT` 要求 3–6 个），每个子任务 = 2–4 次检索 + 1 次抽取 | `deliverable.py` 的 `run()` / `PLAN_PROMPT` |
 | 生产路径零框架依赖：`/api/chat`、`/api/deliverable` 的 import 图里没有 langchain / llama-index；`langgraph` 仅被实验 G 的对照臂引用 | `backend/requirements.txt`、`react_langgraph.py` |
@@ -120,7 +120,7 @@ chat 的需求是：**低延迟、精确停机、事件按固定顺序外发**�
 
 - deliverable 从"一次调用跑几十秒的同步接口"变成"可暂停、可恢复、可并行的工作流"，这是能现场演示的东西；
 - 面试可讲的不再是"我评估过框架"，而是"我在需要状态与恢复的那一层用了框架，其余层没用，理由是 X"；
-- 新增 HTTP 端到端测试（`TestClient`），补上现有 844 项测试里"没有一条真发 HTTP"的空白。
+- 新增 HTTP 端到端测试（`TestClient`），补上现有 845 项测试里"没有一条真发 HTTP"的空白。
 
 **负向**
 
@@ -140,7 +140,7 @@ chat 的需求是：**低延迟、精确停机、事件按固定顺序外发**�
 
 | 模块 | 动作 | 理由 |
 |---|---|---|
-| `app/agent/react.py` | **冻结** | 生产 chat 路径 + 844 测试的重心；任何行为变更都会污染 A–F |
+| `app/agent/react.py` | **冻结** | 生产 chat 路径 + 845 测试的重心；任何行为变更都会污染 A–F |
 | `app/agent/deliverable.py` | 保留全部纯函数与 dataclass；`run()` 拆成节点可调用的方法 | 纯函数是这次迁移唯一稳定的地基 |
 | `app/agent/workflow.py` | **新增**：状态图、节点、Send、checkpoint、事件映射 | 不侵入现有模块 |
 | `app/agent/workflow.py` 的 fan-out | 新增**子任务级**并发闸门 + `max_concurrency` 配置 | 现有 `_semaphore` 只挡入口请求，不限制图内并行度 |
@@ -233,7 +233,7 @@ class WorkflowState(TypedDict, total=False):
 | 行为等价（真实 API） | 归一化后等价（剥 `Nms`、归一化 `tool_call` id 与 tool 消息的 `tool_call_id`）；步数 / 工具序列相同率不低于 A/A 基线（12/15、10/15）；答案 judge 差值须**超过噪声底** | 同一批 10 条任务，before/after；噪声底见下 |
 | 成本可解释 | token 变化必须实测：n=18 实测 **+0.5%**（330,389 → 332,119；单轮在 +4.6% ~ −4.7% 之间波动，属噪声）；并发度上调后再看 KV cache 是否退化 | 同批任务三轮合计 usage |
 | 断点续跑 | 杀掉进程后 resume 能完成，且已完成的子任务调用次数为 0 | 计数断言（FakeLLM / 打点） |
-| chat 未受影响 | `/api/chat` 与 `/api/chat/stream` 的事件结构与答案不变；`main.py` 不 import 新模块 | 源码断言 + 现有 844 项测试 |
+| chat 未受影响 | `/api/chat` 与 `/api/chat/stream` 的事件结构与答案不变；`main.py` 不 import 新模块 | 源码断言 + 现有 845 项测试 |
 | 测试 | 新增 ≥ 25 项：图结构、并行、interrupt/resume、快照序列化、HTTP 端到端 | pytest |
 | 静态检查 | `ruff check .` 全绿 | CI |
 

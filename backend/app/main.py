@@ -665,7 +665,10 @@ async def deliverable_status(run_id: str) -> dict:
         "game": ckpt.game,
         "topic": ckpt.topic,
         "completed": sorted(ckpt.completed_names()),
-        "plan": [p.get("name") for p in ckpt.plan],
+        # 必须返回**完整计划**（含 goal / queries）：审批要基于它改，
+        # 只给名字的话调用方没法拼出 approve 的入参（2026-10-31 冒烟发现的契约 bug）。
+        "plan": ckpt.plan,
+        "plan_names": [p.get("name") for p in ckpt.plan],
         "updated_at": ckpt.updated_at,
     }
 

@@ -174,3 +174,27 @@ async def test_崩溃后重新审批只跑未完成(settings):
 def asdict_subtask(st: SubtaskResult) -> dict:
     from dataclasses import asdict
     return asdict(st)
+
+
+async def test_状态接口返回完整计划而不是名字(settings, monkeypatch):
+    """审批要基于状态里的计划改，所以 `plan` 必须是完整对象。
+
+    2026-10-31 冒烟发现的契约 bug：状态接口只回名字，调用方拼不出 approve 入参。
+    """
+    from app.agent.deliverable_store import Checkpoint
+    from app.main import deliverable_status
+
+    store = InMemorySnapshotStore()
+    await store.save(Checkpoint(
+        run_id="run00000000000011", question="整理三月七的养成指南", game="sr",
+        topic="三月七养成", subject="三月七",
+        plan=[{"name": "甲", "goal": "g甲", "queries": ["q甲"]}],
+        subtasks=[], phase="awaiting_approval",
+    ))
+    monkeypatch.setattr("app.main.FileSnapshotStore", lambda _root: store)
+
+    out = await deliverable_status("run00000000000011")
+
+    assert out["plan"][0]["name"] == "甲"
+    assert out["plan"][0]["queries"] == ["q甲"]
+    assert out["plan_names"] == ["甲"]
