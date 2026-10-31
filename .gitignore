@@ -61,6 +61,10 @@ data/raw/
 *.db
 .tmp_probe/
 .tmp_guard/
+# 跑 pytest / 实验脚本时的本地临时目录（本机 TEMP 指向仓库内才可写）。
+# 跟 .tmp_probe / .tmp_guard 同类，都是一次性产物，不该入库。
+.tmp_pytest/
+.tmp_pkg/
 
 # checkpoint 现在**入库**：它不是派生物，而是版本更新链路的运行状态。
 # data/raw 丢了重抓就行（要花 WAF 配额），checkpoint 丢了就得整库重抓才能重建。
