@@ -126,7 +126,7 @@ query 措辞与实时抓取结果都会引入分叉（2026-10-30 的 A/A 实测�
 
 - sr 15 条代表性子集（single_hop 5 / numerical 2 / semantic 3 / multi_hop 2 / unanswerable 3）；
 - `deepseek-chat`、temperature=0、4 个工具、ABBA 平衡顺序、预热 1 条（丢弃）、强制串行；
-- 产物 `data/eval/exp_G_sr15.json`（git `68512ef`，3932 chunk / 706 页，langgraph 1.2.18）；
+- 产物 `data/eval/exp_G_sr15.json`（run 时 HEAD `8cacffb`，产物入库于 `68512ef`；3932 chunk / 706 页，langgraph 1.2.18）；
 - ⚠️ 已知未消除变量：预取证据只喂 Judge，两个 arm 在循环里**各自实时检索** ——
   query 措辞与抓取结果会引入分叉（见上文）。
 
