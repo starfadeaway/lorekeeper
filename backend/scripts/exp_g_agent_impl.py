@@ -97,6 +97,10 @@ from exp_common import (  # noqa: E402
     subset_composition,
 )
 
+# 工具序列签名**必须复用 A/A 基线的那一份**（10/15 就是它算的）。
+# 复制一份改写 = 换指标：两份数字看着相近，实际不可比，比数字错更难发现。
+from exp_g_aa_noise import tool_signature  # noqa: E402
+
 #: 两个 arm 的顺序 = 产物里的先后顺序。
 #: `paired_scores` 取**首尾**做对比，Δ = 末档 − 首档 = LG − HAND，
 #: 正数 = LangGraph 更好。这个方向约定与 exp_common 的既有用法一致。
@@ -132,6 +136,7 @@ async def run_case(case, *, label: str, judge: Judge, llm, schemas, ctx) -> dict
 
     contexts = ctx["contexts"]
     t0 = time.perf_counter()
+    messages: list[dict] | None = None
     try:
         st = await agent.run(case.question, ctx=ctx["tool_ctx"])
         answer = st.answer
@@ -139,6 +144,7 @@ async def run_case(case, *, label: str, judge: Judge, llm, schemas, ctx) -> dict
         steps, failures, refs = len(st.steps), st.tool_failures, st.refs
         guard, stop_reason = st.guard_stats(), st.stop_reason
         loop_ms = st.elapsed_ms
+        messages = getattr(st, "messages", None)
         err = None
     except Exception as exc:  # noqa: BLE001
         answer, usage, steps, failures, refs = "", {}, 0, 0, []
@@ -165,6 +171,9 @@ async def run_case(case, *, label: str, judge: Judge, llm, schemas, ctx) -> dict
     # loop_ms 才是「循环本身花了多久」—— 后者才是本实验要比的东西。
     row["loop_ms"] = loop_ms
     row["impl"] = label
+    # 工具序列：ADR-001 §8 行为层验收的第三项。必须**追加**在 case_row 之后，
+    # 不改 16 键契约（同 loop_ms / impl 的先例）；异常路径也写空列表，保证 schema 稳定。
+    row["tool_seq"] = tool_signature(messages or [])
     return row
 
 

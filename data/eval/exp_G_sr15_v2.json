@@ -1,0 +1,1018 @@
+[
+  {
+    "label": "HAND",
+    "tools": [
+      "search_kb",
+      "get_page",
+      "calculator",
+      "list_games"
+    ],
+    "concurrency": 1,
+    "aggregate": {
+      "judge_score": 4.9286,
+      "correctness": 5.0,
+      "faithfulness": 4.8571,
+      "avg_prompt_tokens": 10209,
+      "avg_completion_tokens": 422,
+      "avg_steps": 2.5,
+      "tool_failure_rate": 0.1143,
+      "ref_coverage": 1.0,
+      "avg_latency_ms": 5316,
+      "errors": 0,
+      "judge_errors": 1,
+      "all_failed": false,
+      "n": 15,
+      "n_ok": 14
+    },
+    "loop_aggregate": {
+      "avg_loop_ms": 5316,
+      "median_loop_ms": 3258,
+      "avg_steps": 2.5,
+      "avg_prompt_tokens": 10209,
+      "n_ok": 14,
+      "n": 15
+    },
+    "rows": [
+      {
+        "case_id": "sr-001",
+        "category": "single_hop",
+        "correctness": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "judge_score": 5.0,
+        "judge_reason": "完全正确且覆盖所有要点",
+        "prompt_tokens": 4035,
+        "completion_tokens": 194,
+        "steps": 1,
+        "tool_failures": 0,
+        "has_refs": true,
+        "latency_ms": 2400,
+        "error": null,
+        "answer": "光锥「我」的诞生：\n\n- **稀有度**：4星\n- **命途**：智识\n- **技能**：画像少女。装备者造成的追加攻击伤害提高 24%/30%/36%/42%/48%；若目标当前生命值百分比 ≤50%，追加攻击伤害额外提高同等数值。\n- **获取方式**：跃迁（1.0 版本实装），相关角色为黑塔。\n\n出处：「我」的诞生（页面修订 2024-10-31）。该页面修订日期较早，若后续版本有数值调整，请以游戏内实际为准。",
+        "stop_reason": "answer",
+        "guard": {
+          "unique_queries": 1,
+          "dedup_blocked": 0,
+          "forced_finishes": 0,
+          "consecutive_misses": 0
+        },
+        "loop_ms": 2400,
+        "impl": "HAND",
+        "tool_seq": [
+          "search_kb({\"game\": \"sr\", \"query\": \"光锥「我」的诞生 星级 命途\"})"
+        ]
+      },
+      {
+        "case_id": "sr-002",
+        "category": "single_hop",
+        "correctness": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "judge_score": 5.0,
+        "judge_reason": "准确引用证据中的两件套效果描述，覆盖全部要点",
+        "prompt_tokens": 4212,
+        "completion_tokens": 207,
+        "steps": 1,
+        "tool_failures": 0,
+        "has_refs": true,
+        "latency_ms": 2249,
+        "error": null,
+        "answer": "**太空封印站（位面饰品）两件套效果：**\n\n- 使装备者的攻击力提高 **12%**。\n- 当装备者的速度 **≥120** 时，攻击力额外提高 **12%**（即最多共 24% 攻击力）。\n\n**其他信息：**\n- 获取途径：模拟宇宙·第三世界、差分宇宙，以及完成开拓任务「时不我待，我的朋友」获得。\n- 位面球：「黑塔」的空间站点；连结绳：「黑塔」的漫历轨迹。\n- 实装版本：1.0。\n\n出处：[太空封印站]（页面修订 2025-04-13）",
+        "stop_reason": "answer",
+        "guard": {
+          "unique_queries": 1,
+          "dedup_blocked": 0,
+          "forced_finishes": 0,
+          "consecutive_misses": 0
+        },
+        "loop_ms": 2249,
+        "impl": "HAND",
+        "tool_seq": [
+          "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 太空封印站 两件套效果\"})"
+        ]
+      },
+      {
+        "case_id": "sr-004",
+        "category": "single_hop",
+        "correctness": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "judge_score": 5.0,
+        "judge_reason": "称号正确且所有信息均有证据支持",
+        "prompt_tokens": 3950,
+        "completion_tokens": 155,
+        "steps": 2,
+        "tool_failures": 0,
+        "has_refs": true,
+        "latency_ms": 2631,
+        "error": null,
+        "answer": "**阿然的称号是「梦境鼓励师」**（《崩坏：星穹铁道》）。\n\n- 性别：女\n- 位置：黄金的时刻\n- 实装版本：2.0\n- 无商店，有对话\n\n出处：阿然页面，修订日期 2024-03-31 [阿然]。该条目修订较早，若后续版本有改动，知识库未收录。",
+        "stop_reason": "answer",
+        "guard": {
+          "unique_queries": 1,
+          "dedup_blocked": 0,
+          "forced_finishes": 0,
+          "consecutive_misses": 0
+        },
+        "loop_ms": 2631,
+        "impl": "HAND",
+        "tool_seq": [
+          "search_kb({\"query\": \"NPC 阿然 称号\"})",
+          "list_games({})"
+        ]
+      },
+      {
+        "case_id": "sr-006",
+        "category": "single_hop",
+        "correctness": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "judge_score": 5.0,
+        "judge_reason": "完全匹配参考答案，所有信息均有证据支持",
+        "prompt_tokens": 5325,
+        "completion_tokens": 322,
+        "steps": 2,
+        "tool_failures": 0,
+        "has_refs": true,
+        "latency_ms": 3259,
+        "error": null,
+        "answer": "**凝滞虚影 • 空海之形**（星铁）\n\n- **实装版本**：1.0 [凝滞虚影 • 空海之形]\n- **可能获取**：虚幻铸铁（量子属性角色突破材料）[凝滞虚影 • 空海之形]\n- **其他信息**：\n  - 关卡类型：凝滞虚影；开拓力消耗：30\n  - 所在地图：基座舱段\n  - 建议属性：物理、风、虚数\n  - 可能遭遇：虚卒•践踏者、虚卒•掠夺者\n  - 关卡属性：量子\n\n注：该页面修订日期为 2024-03-16，是较早的条目；若后续版本有掉落调整，知识库未收录更新内容。",
+        "stop_reason": "answer",
+        "guard": {
+          "unique_queries": 2,
+          "dedup_blocked": 0,
+          "forced_finishes": 0,
+          "consecutive_misses": 0
+        },
+        "loop_ms": 3258,
+        "impl": "HAND",
+        "tool_seq": [
+          "search_kb({\"game\": \"sr\", \"query\": \"凝滞虚影 空海之形 实现版本 掉落物品\"})",
+          "search_kb({\"game\": \"sr\", \"query\": \"凝滞虚影 空海之形\", \"top_k\": 10})"
+        ]
+      },
+      {
+        "case_id": "sr-008",
+        "category": "numerical",
+        "correctness": 0,
+        "faithfulness": 0,
+        "completeness": 0,
+        "judge_score": 0.0,
+        "judge_reason": "judge_error:TimeoutError",
+        "prompt_tokens": 7008,
+        "completion_tokens": 383,
+        "steps": 3,
+        "tool_failures": 0,
+        "has_refs": true,
+        "latency_ms": 4800,
+        "error": null,
+        "answer": "- 速度 <120：**+120 攻击力**（12%）\n- 速度 ≥120：**+240 攻击力**（12% + 12% = 24%）\n\n补充说明：\n- 这里的百分比按角色**基础攻击力**（角色自身 + 光锥）计算，不是按面板总攻击力计算；如果你说的 1000 是面板总攻击力，实际加成会低于上述数值。\n- 该套装目前多作为过渡选择，同赛道中苍穹战线格拉默（135 速度给 12% 增伤）通常更优 [太空封印站]。\n\n数据来源页面修订日期为 2025-04-13，若后续版本有数值调整，请以游戏内为准。",
+        "stop_reason": "answer",
+        "guard": {
+          "unique_queries": 1,
+          "dedup_blocked": 0,
+          "forced_finishes": 0,
+          "consecutive_misses": 0
+        },
+        "loop_ms": 4799,
+        "impl": "HAND",
+        "tool_seq": [
+          "search_kb({\"game\": \"sr\", \"query\": \"太空封印站 位面饰品 攻击力加成 效果\"})",
+          "calculator({\"expression\": \"1000*0.12\"})",
+          "calculator({\"expression\": \"1000*0.24\"})"
+        ]
+      },
+      {
+        "case_id": "sr-023",
+        "category": "single_hop",
+        "correctness": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "judge_score": 5.0,
+        "judge_reason": "正确回答生命值和技能名称，且所有信息均有证据支持",
+        "prompt_tokens": 3940,
+        "completion_tokens": 282,
+        "steps": 1,
+        "tool_failures": 0,
+        "has_refs": true,
+        "latency_ms": 2589,
+        "error": null,
+        "answer": "**光锥「我」的诞生**（4星·智识命途）[「我」的诞生]\n\n- **基础生命值**：初始 43；满级（80级）**952**（各阶段：20级166 / 30级282 / 40级416 / 50级550 / 60级684 / 70级818 / 80级952）\n- **技能名称**：**画像少女**\n- **技能效果**：使装备者追加攻击造成的伤害提高 24%/30%/36%/42%/48%；若该敌方目标当前生命值百分比 ≤50%，追加攻击伤害额外提高 24%/30%/36%/42%/48%\n- 其他：攻击力初始 21（满级 476）、防御力初始 15；获取方式为跃迁，实装版本 1.0，相关角色黑塔\n\n注：该页面修订日期为 2024-10-31，数值可能已随版本调整，建议以游戏内实际显示为准。",
+        "stop_reason": "answer",
+        "guard": {
+          "unique_queries": 1,
+          "dedup_blocked": 0,
+          "forced_finishes": 0,
+          "consecutive_misses": 0
+        },
+        "loop_ms": 2589,
+        "impl": "HAND",
+        "tool_seq": [
+          "search_kb({\"game\": \"sr\", \"query\": \"光锥「我」的诞生 基础生命值 技能名称\"})"
+        ]
+      },
+      {
+        "case_id": "sr-007",
+        "category": "semantic",
+        "correctness": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 4.0,
+        "judge_score": 5.0,
+        "judge_reason": "正确引用证据，覆盖主要选择逻辑",
+        "prompt_tokens": 15513,
+        "completion_tokens": 744,
+        "steps": 4,
+        "tool_failures": 0,
+        "has_refs": true,
+        "latency_ms": 8514,
+        "error": null,
+        "answer": "按「攻击力 + 速度」这个需求，星铁里最对口的是这两套位面饰品（2件套）：\n\n**1. 太空封印站（最直接）**\n- 2件套：攻击力 +12%；速度 ≥120 时再 +12% 攻击力，合计 24% 攻击力 [太空封印站]\n- 门槛低（120 速度），「攻击力不够」时收益最直白，适合作为过渡 [太空封印站]\n- 缺点：纯攻击力加成，稀释度比暴击/增伤类高，后期通常被替代 [太空封印站]\n\n**2. 苍穹战线格拉默（速度够就是上位）**\n- 2件套：攻击力 +12%；速度 ≥135 / ≥160 时，造成伤害 +12% / +18% [苍穹战线格拉默]\n- 速度达标时是封印站的上位选择，兼顾攻击与增伤 [太空封印站]\n- 缺点：160 速度门槛高，只吃到 135 档（12% 增伤）时收益一般 [卡芙卡/攻略]\n\n**怎么选**\n- 速度暂时上不去（<135）：先穿**太空封印站**，24% 攻击力最稳。\n- 速度能堆到 135 以上：换**苍穹战线格拉默**，攻击力一样有 12%，还多一段增伤。\n- 想「更快」本身，靠位面饰品解决不了太多——速度主要来自脚部主词条、副词条和队友（如信使套/",
+        "stop_reason": "answer",
+        "guard": {
+          "unique_queries": 3,
+          "dedup_blocked": 0,
+          "forced_finishes": 0,
+          "consecutive_misses": 0
+        },
+        "loop_ms": 8514,
+        "impl": "HAND",
+        "tool_seq": [
+          "list_games({})",
+          "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 攻击力 速度 推荐\", \"top_k\": 10})",
+          "get_page({\"game\": \"sr\", \"title\": \"太空封印站\"})",
+          "search_kb({\"game\": \"sr\", \"query\": \"苍穹战线格拉默 位面饰品 两件套效果 攻击力 速度\", \"top_k\": 6})"
+        ]
+      },
+      {
+        "case_id": "sr-011",
+        "category": "semantic",
+        "correctness": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "judge_score": 5.0,
+        "judge_reason": "准确匹配参考答案，完整引用证据内容",
+        "prompt_tokens": 6183,
+        "completion_tokens": 530,
+        "steps": 2,
+        "tool_failures": 0,
+        "has_refs": true,
+        "latency_ms": 4763,
+        "error": null,
+        "answer": "**推荐：繁星竞技场（2件套）** —— 这正是「普攻+战技增伤」的位面饰品。\n\n**效果**\n- 暴击率 +8%\n- 当前暴击率 ≥70% 时，普攻和战技造成的伤害 +20% [繁星竞技场]\n\n**针对你「暴击率差一点到线」的情况**\n- 套装自带的 8% 暴击率是**算进面板**的，所以实际门槛是：装备后面板暴击率 ≥70%（也就是原本约 62% 即可达标）。\n- 如果还差一点，可以靠躯干主词条选暴击率、副词条堆暴击率，或搭配提供暴击率的辅助/光锥来补足 [那刻夏/攻略]。\n- 注意：**没到 70% 就只有 8% 暴击率，20% 增伤完全吃不到**，此时收益会明显低于其他位面饰品 [繁星竞技场]。\n\n**对比参考**\n- 停转的萨尔索图：暴击率 +8%，但门槛 50%，且只加终结技与追加攻击伤害 —— 不加普攻/战技，不符合你的需求 [停转的萨尔索图]。\n- 出云显世与高天神国：提供攻击力与暴击率，适合双智识等特定配队，但没有普攻/战技增伤 [那刻夏/攻略]。\n\n**前提**：你的角色普攻+战技输出占比要够高，否则这套的增伤收益会被稀释 [繁星竞技场]。\n\n补充说明：以上数值来自",
+        "stop_reason": "answer",
+        "guard": {
+          "unique_queries": 1,
+          "dedup_blocked": 0,
+          "forced_finishes": 0,
+          "consecutive_misses": 0
+        },
+        "loop_ms": 4762,
+        "impl": "HAND",
+        "tool_seq": [
+          "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 暴击率 提升普攻和战技伤害\", \"top_k\": 10})",
+          "list_games({})"
+        ]
+      },
+      {
+        "case_id": "sr-013",
+        "category": "semantic",
+        "correctness": 5.0,
+        "faithfulness": 3.0,
+        "completeness": 4.0,
+        "judge_score": 4.0,
+        "judge_reason": "效果正确，但获取方式和部分命途适用性无依据",
+        "prompt_tokens": 16879,
+        "completion_tokens": 535,
+        "steps": 3,
+        "tool_failures": 0,
+        "has_refs": true,
+        "latency_ms": 6566,
+        "error": null,
+        "answer": "**有，最直接的是「生命的翁瓦克」2件套。**\n\n- **效果**：能量恢复效率+5%；当装备者速度≥120时，**进入战斗立刻行动提前40%**，也就是开局抢先手。[生命的翁瓦克]\n- **获取**：模拟宇宙·第四世界、差分宇宙。[生命的翁瓦克]\n- **适用**：适合有辅助能力的角色（存护、丰饶、同谐、虚无等命途），先手给队友上增益；同时5%回能对依赖终结技的辅助也很实用。[生命的翁瓦克]\n- **注意**：需要速度达到120才能触发行动提前，所以脚部建议带速度鞋，副词条也优先速度。[佩拉/攻略]\n\n**其他相关选择：**\n- 「劫火莲灯铸炼宫」2件套提供速度+击破特攻，但它是靠速度提高出手频率，不是开局行动提前，属于击破队向。[劫火莲灯铸炼宫]\n- 若想提高整体出手频率，隧洞遗器「晨昏交界的翔鹰」4件套（大招后行动提前）和「骇域漫游的信使」等速度2件套可以配合使用。[佩拉/攻略]\n\n补充说明：以上数值来自「生命的翁瓦克」页面，该页最后修订日期为 2025-04-13，若之后版本有调整，请以游戏内实际描述为准。",
+        "stop_reason": "answer",
+        "guard": {
+          "unique_queries": 3,
+          "dedup_blocked": 0,
+          "forced_finishes": 0,
+          "consecutive_misses": 0
+        },
+        "loop_ms": 6566,
+        "impl": "HAND",
+        "tool_seq": [
+          "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 提升速度 抢先手 战斗开始\", \"top_k\": 8})",
+          "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 速度加成 效果命中 遗器套装\", \"top_k\": 8})",
+          "get_page({\"game\": \"sr\", \"title\": \"生命的翁瓦克\"})"
+        ]
+      },
+      {
+        "case_id": "sr-025",
+        "category": "multi_hop",
+        "correctness": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "judge_score": 5.0,
+        "judge_reason": "完全匹配参考答案且证据充分",
+        "prompt_tokens": 3930,
+        "completion_tokens": 300,
+        "steps": 1,
+        "tool_failures": 0,
+        "has_refs": true,
+        "latency_ms": 2997,
+        "error": null,
+        "answer": "**折断的龙骨（位面饰品，2件套）**\n\n- **效果抵抗门槛**：装备者的效果抵抗 **≥30%** 时触发额外效果（套装本身先提供 10% 效果抵抗）[折断的龙骨]\n- **提升对象**：**我方全体**的暴击伤害提高 **10%**，也就是给全队加暴伤，并非只提升装备者自己 [折断的龙骨]\n- 该暴伤增益可叠加（多名角色佩戴时）[折断的龙骨 > 搭配推荐]\n- 获取：模拟宇宙·第七世界、差分宇宙；实装版本 1.2 [折断的龙骨]\n\n补充：因为套装自带 10% 效果抵抗，实际只需再从副词条/行迹凑约 20% 即可达标；自带效果抵抗的角色（如砂金、布洛妮娅）较易触发 [砂金/攻略][折断的龙骨 > 搭配推荐]。\n\n数据来源页面「折断的龙骨」修订日期为 2025-04-13，若之后版本有数值调整，请以游戏内为准。",
+        "stop_reason": "answer",
+        "guard": {
+          "unique_queries": 1,
+          "dedup_blocked": 0,
+          "forced_finishes": 0,
+          "consecutive_misses": 0
+        },
+        "loop_ms": 2997,
+        "impl": "HAND",
+        "tool_seq": [
+          "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 折断的龙骨 效果抵抗 门槛 暴击伤害\"})"
+        ]
+      },
+      {
+        "case_id": "sr-028",
+        "category": "multi_hop",
+        "correctness": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "judge_score": 5.0,
+        "judge_reason": "数值与描述均准确匹配证据，完整覆盖问题要点",
+        "prompt_tokens": 4189,
+        "completion_tokens": 205,
+        "steps": 1,
+        "tool_failures": 0,
+        "has_refs": true,
+        "latency_ms": 3247,
+        "error": null,
+        "answer": "**奇想蕉乐园（位面饰品，2件套）**\n\n- 基础效果：装备者暴击伤害提高 **16.0%**。\n- 存在装备者召唤的目标时：暴击伤害**额外**提高 **32.0%**，即合计 **48.0%** 暴击伤害。\n- 获取方式：差分宇宙；实装版本 2.5；相关角色：波提欧、乱破、不死途（景元的神君也算召唤物，可吃满加成）[奇想蕉乐园]\n\n数据来源页面修订日期为 2026-09-10，属较新条目。",
+        "stop_reason": "answer",
+        "guard": {
+          "unique_queries": 1,
+          "dedup_blocked": 0,
+          "forced_finishes": 0,
+          "consecutive_misses": 0
+        },
+        "loop_ms": 3247,
+        "impl": "HAND",
+        "tool_seq": [
+          "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 奇想蕉乐园 暴击伤害提升 召唤目标\"})"
+        ]
+      },
+      {
+        "case_id": "sr-009",
+        "category": "unanswerable",
+        "correctness": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "judge_score": 5.0,
+        "judge_reason": "正确说明无法确认未来版本内容",
+        "prompt_tokens": 16890,
+        "completion_tokens": 935,
+        "steps": 7,
+        "tool_failures": 2,
+        "has_refs": true,
+        "latency_ms": 16365,
+        "error": null,
+        "answer": "我查了三款游戏的知识库，结论是：**无法回答「下个版本新增哪个角色、技能是什么」**，原因如下。\n\n**1. 知识库没有「版本前瞻 / 未来版本」类内容**\n- 检索到的都是已实装角色的图鉴页（含实装版本、实装日期），例如星铁「银狼LV.999」实装版本 4.2 [银狼LV.999]、绝区零「千夏」实装版本 2.6 [千夏]、原神「卡齐娜」实装版本 5.0 [卡齐娜]。\n- 没有任何条目描述「尚未上线、下个版本将实装」的角色技能。知识库未收录版本前瞻直播、官方公告这类信息。\n\n**2. 无法确定「当前版本」是哪个**\n- 各页面修订日期跨度很大（星铁页面最晚修订到 2026-09-12，绝区零到 2026-08-12，原神到 2026-07-24），但修订日期不等于版本进度，我无法据此推断你所在服务器的当前版本号，也就无法定义「下一个版本」。\n\n**3. 你也没说明是哪款游戏**\n- 星铁、绝区零、原神三款都在知识库内，术语体系不同（光锥/音擎/圣遗物），需要你指明。\n\n**建议**\n- 告诉我具体游戏 + 你当前的版本号，我可以帮你查该版本**已实装**角色的技能与配装。\n- 想看下",
+        "stop_reason": "answer",
+        "guard": {
+          "unique_queries": 4,
+          "dedup_blocked": 2,
+          "forced_finishes": 0,
+          "consecutive_misses": 0
+        },
+        "loop_ms": 16365,
+        "impl": "HAND",
+        "tool_seq": [
+          "list_games({})",
+          "search_kb({\"game\": \"sr\", \"query\": \"下个版本新增角色 技能介绍\", \"top_k\": 5})",
+          "search_kb({\"game\": \"zzz\", \"query\": \"下个版本新增角色 技能介绍\", \"top_k\": 5})",
+          "search_kb({\"game\": \"ys\", \"query\": \"下个版本新增角色 技能介绍\", \"top_k\": 5})",
+          "search_kb({\"game\": \"sr\", \"query\": \"最新版本号 版本更新内容 新角色上线\", \"top_k\": 8})",
+          "search_kb({\"game\": \"zzz\", \"query\": \"最新版本 新代理人 实装版本\", \"top_k\": 8})",
+          "search_kb({\"game\": \"ys\", \"query\": \"最新版本 新角色 实装版本 卡池\", \"top_k\": 8})"
+        ]
+      },
+      {
+        "case_id": "sr-031",
+        "category": "unanswerable",
+        "correctness": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "judge_score": 5.0,
+        "judge_reason": "准确说明知识库未收录4.0版本遗器信息，未编造内容",
+        "prompt_tokens": 50058,
+        "completion_tokens": 972,
+        "steps": 8,
+        "tool_failures": 2,
+        "has_refs": true,
+        "latency_ms": 12525,
+        "error": null,
+        "answer": "## 结论：知识库未收录「星铁 4.0 版本实装的新遗器套装」及其两件套效果\n\n我检索了遗器总览页、各角色配装页和版本相关页面，**没有找到任何标注「实装版本：4.0」的遗器套装条目**，因此无法回答 4.0 版本实装了哪套新遗器、两件套效果是什么。\n\n### 已确认的相关信息（供参考，均非 4.0 新套装）\n\n- **遗器总览页**（修订 2026-07-15）只列出了各副本、历战余响的掉落套装清单，没有按版本标注实装时间，也没有套装效果数值。[遗器]\n- 知识库中能查到的较新套装，例如「自匿星芒的隐士」「闪耀功勋的魔法少女」，其掉落来源「历战余响 • 坏灭的喜剧」标注为**实装版本 4.4**，不是 4.0。[历战余响 • 坏灭的喜剧]\n- 4.0 版本在知识库中能确认的内容只有二相乐园地图的拟造花萼关卡（藏珍之蕾、回忆之蕾，实装版本 4.0），与遗器无关。[藏珍之蕾 • 二相乐园]\n\n### 缺少的信息\n\n1. 4.0 版本新增遗器套装的**名称**；\n2. 该套装的**两件套、四件套效果文本**；\n3. 该套装的**实装版本标注**（知识库中遗器条目普遍缺少这一字段）。\n\n建议",
+        "stop_reason": "max_steps",
+        "guard": {
+          "unique_queries": 6,
+          "dedup_blocked": 0,
+          "forced_finishes": 2,
+          "consecutive_misses": 2
+        },
+        "loop_ms": 12525,
+        "impl": "HAND",
+        "tool_seq": [
+          "search_kb({\"game\": \"sr\", \"query\": \"星铁 4.0 版本新遗器套装 两件套效果\"})",
+          "search_kb({\"game\": \"sr\", \"query\": \"遗器套装 两件套效果 列表\"})",
+          "search_kb({\"game\": \"sr\", \"query\": \"4.0版本 新增遗器 隧洞遗器 位面饰品 实装\", \"top_k\": 10})",
+          "get_page({\"game\": \"sr\", \"title\": \"遗器\"})",
+          "search_kb({\"game\": \"sr\", \"query\": \"4.0 版本更新内容 新角色 新遗器 版本前瞻\", \"top_k\": 10})",
+          "search_kb({\"game\": \"sr\", \"query\": \"二相乐园 自匿星芒的隐士 闪耀功勋的魔法少女 套装效果\", \"top_k\": 10})",
+          "get_page({\"game\": \"sr\", \"title\": \"自匿星芒的隐士\"})",
+          "get_page({\"game\": \"sr\", \"title\": \"闪耀功勋的魔法少女\"})"
+        ]
+      },
+      {
+        "case_id": "sr-032",
+        "category": "unanswerable",
+        "correctness": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "judge_score": 5.0,
+        "judge_reason": "正确指出无三件套，事实与证据一致",
+        "prompt_tokens": 3906,
+        "completion_tokens": 260,
+        "steps": 1,
+        "tool_failures": 0,
+        "has_refs": true,
+        "latency_ms": 2717,
+        "error": null,
+        "answer": "**太空封印站是位面饰品，只有两件套效果，没有三件套效果。**\n\n- **两件套效果**：使装备者的攻击力提高 12%；当装备者的速度 ≥ 120 时，攻击力额外提高 12%（合计最高 24% 攻击力）[太空封印站]\n- **部位**：位面球「黑塔」的空间站点、连结绳「黑塔」的漫历轨迹\n- **获取**：模拟宇宙·第三世界、差分宇宙，以及完成开拓任务「不我待，我的朋友」时获得\n- **实装版本**：1.0\n\n补充说明：星铁的位面饰品套装只有 2 件套效果，隧洞遗器才有 4 件套；因此不存在「三件套」这一档。以上数据来自页面修订日期为 2025-04-13 的条目，目前未见更新版本改动记录。",
+        "stop_reason": "answer",
+        "guard": {
+          "unique_queries": 1,
+          "dedup_blocked": 0,
+          "forced_finishes": 0,
+          "consecutive_misses": 0
+        },
+        "loop_ms": 2717,
+        "impl": "HAND",
+        "tool_seq": [
+          "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 太空封印站 套装效果\"})"
+        ]
+      },
+      {
+        "case_id": "sr-030",
+        "category": "numerical",
+        "correctness": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "judge_score": 5.0,
+        "judge_reason": "准确引用证据说明触发条件及效果",
+        "prompt_tokens": 3928,
+        "completion_tokens": 272,
+        "steps": 1,
+        "tool_failures": 0,
+        "has_refs": true,
+        "latency_ms": 3606,
+        "error": null,
+        "answer": "**结论：效果抵抗 25% 时，折断的龙骨不会触发暴伤加成，暴击伤害提高 0%。**\n\n- 两件套效果：装备者效果抵抗提高 10%；当装备者效果抵抗 **≥30%** 时，我方全体暴击伤害提高 10% [折断的龙骨]。\n- 25% 低于 30% 的触发阈值，因此只获得 10% 效果抵抗，不获得暴伤加成。\n- 若想触发，需要把效果抵抗堆到 30% 以上（例如靠行迹、副词条或队友增益补足）[折断的龙骨]。\n\n补充：该套装提供的暴伤增益可以叠加，适合存护、丰饶、同谐、虚无等辅助角色佩戴 [折断的龙骨]。\n\n注：以上数值来自「折断的龙骨」页面，修订日期为 2025-04-13，可能已随版本调整，建议以游戏内最新文本为准。",
+        "stop_reason": "answer",
+        "guard": {
+          "unique_queries": 1,
+          "dedup_blocked": 0,
+          "forced_finishes": 0,
+          "consecutive_misses": 0
+        },
+        "loop_ms": 3606,
+        "impl": "HAND",
+        "tool_seq": [
+          "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 折断的龙骨 效果抵抗 暴击伤害\"})"
+        ]
+      }
+    ],
+    "_meta": {
+      "script": "exp_g_agent_impl.py",
+      "generated_at": "2026-10-31T14:22:11+00:00",
+      "experiment": "G",
+      "game": "sr",
+      "variant": null,
+      "top_k": null,
+      "labels": [
+        "HAND",
+        "LG"
+      ],
+      "index_chunks": 3932,
+      "index_pages": 706,
+      "git_commit": "16fd314",
+      "arms": [
+        "HAND",
+        "LG"
+      ],
+      "variable": "agent 循环实现（手写 while vs LangGraph StateGraph）",
+      "tool_set": [
+        "search_kb",
+        "get_page",
+        "calculator",
+        "list_games"
+      ],
+      "concurrency": 1,
+      "order": "ABBA（奇数题 HAND→LG、偶数题 LG→HAND），抵消位置效应",
+      "warmup_cases": 1,
+      "note": "ABBA 平衡顺序 + 预热轮（结果丢弃）+ 强制串行：并发下 latency_ms 含排队时间，会把 LangGraph 的调度开销差淹没；固定顺序则会让先跑的那个 arm 系统性承担冷启动。每条题预取一次检索证据、两个 arm 共用（仅喂 Judge）；Agent 循环内两个 arm 各自实时检索 —— 这是已知未消除的隐藏变量。",
+      "langgraph_version": "1.2.18"
+    }
+  },
+  {
+    "label": "LG",
+    "tools": [
+      "search_kb",
+      "get_page",
+      "calculator",
+      "list_games"
+    ],
+    "concurrency": 1,
+    "aggregate": {
+      "judge_score": 4.7143,
+      "correctness": 4.9286,
+      "faithfulness": 4.5,
+      "avg_prompt_tokens": 9582,
+      "avg_completion_tokens": 403,
+      "avg_steps": 2.36,
+      "tool_failure_rate": 0.0606,
+      "ref_coverage": 1.0,
+      "avg_latency_ms": 4110,
+      "errors": 0,
+      "judge_errors": 1,
+      "all_failed": false,
+      "n": 15,
+      "n_ok": 14
+    },
+    "loop_aggregate": {
+      "avg_loop_ms": 4110,
+      "median_loop_ms": 3719,
+      "avg_steps": 2.36,
+      "avg_prompt_tokens": 9582,
+      "n_ok": 14,
+      "n": 15
+    },
+    "rows": [
+      {
+        "case_id": "sr-001",
+        "category": "single_hop",
+        "correctness": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "judge_score": 5.0,
+        "judge_reason": "准确匹配参考答案，所有信息均有证据支持，完整覆盖问题要点",
+        "prompt_tokens": 4035,
+        "completion_tokens": 204,
+        "steps": 1,
+        "tool_failures": 0,
+        "has_refs": true,
+        "latency_ms": 2263,
+        "error": null,
+        "answer": "光锥「我」的诞生：\n\n- **稀有度**：4星\n- **命途**：智识\n- **技能「画像少女」**：装备者追加攻击造成的伤害提高 24%/30%/36%/42%/48%；若目标当前生命值百分比 ≤50%，追加攻击伤害额外提高 24%/30%/36%/42%/48%\n- **获取方式**：跃迁；实装版本 1.0；相关角色：黑塔\n\n出处：[「我」的诞生]\n\n注：该页面修订日期为 2024-10-31，数值可能已随版本调整，建议以游戏内最新数据为准。",
+        "stop_reason": "answer",
+        "guard": {
+          "unique_queries": 1,
+          "dedup_blocked": 0,
+          "forced_finishes": 0,
+          "consecutive_misses": 0
+        },
+        "loop_ms": 2263,
+        "impl": "LG",
+        "tool_seq": [
+          "search_kb({\"game\": \"sr\", \"query\": \"光锥「我」的诞生 星级 命途\"})"
+        ]
+      },
+      {
+        "case_id": "sr-002",
+        "category": "single_hop",
+        "correctness": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "judge_score": 5.0,
+        "judge_reason": "准确复述参考答案，所有信息均有证据支持，覆盖问题要点",
+        "prompt_tokens": 4212,
+        "completion_tokens": 226,
+        "steps": 1,
+        "tool_failures": 0,
+        "has_refs": true,
+        "latency_ms": 2801,
+        "error": null,
+        "answer": "**太空封印站（位面饰品）两件套效果：**\n\n- 使装备者的**攻击力提高 12%**。\n- 当装备者的**速度 ≥ 120** 时，攻击力**额外提高 12%**（即最多共 24% 攻击力）。\n\n**其他信息：**\n- 获取途径：模拟宇宙·第三世界、差分宇宙，以及完成开拓任务「时不我待，我的朋友」获得。\n- 位面球：「黑塔」的空间站点；连结绳：「黑塔」的漫历轨迹。\n- 实装版本：1.0。\n\n出处：[太空封印站]（该页面修订于 2025-04-13，数值可能随版本调整，建议以游戏内最新文本为准）",
+        "stop_reason": "answer",
+        "guard": {
+          "unique_queries": 1,
+          "dedup_blocked": 0,
+          "forced_finishes": 0,
+          "consecutive_misses": 0
+        },
+        "loop_ms": 2801,
+        "impl": "LG",
+        "tool_seq": [
+          "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 太空封印站 两件套效果\"})"
+        ]
+      },
+      {
+        "case_id": "sr-004",
+        "category": "single_hop",
+        "correctness": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "judge_score": 5.0,
+        "judge_reason": "准确引用证据1，完整覆盖问题要点",
+        "prompt_tokens": 3938,
+        "completion_tokens": 131,
+        "steps": 2,
+        "tool_failures": 0,
+        "has_refs": true,
+        "latency_ms": 2232,
+        "error": null,
+        "answer": "**阿然的称号是「梦境鼓励师」**（《崩坏：星穹铁道》）。\n\n- 全名：阿然；性别：女\n- 位置：黄金的时刻\n- 实装版本：2.0\n- 无商店，有对话\n\n出处：[阿然]（页面修订日期 2024-03-31）",
+        "stop_reason": "answer",
+        "guard": {
+          "unique_queries": 1,
+          "dedup_blocked": 0,
+          "forced_finishes": 0,
+          "consecutive_misses": 0
+        },
+        "loop_ms": 2232,
+        "impl": "LG",
+        "tool_seq": [
+          "search_kb({\"query\": \"NPC 阿然 称号\"})",
+          "list_games({})"
+        ]
+      },
+      {
+        "case_id": "sr-006",
+        "category": "single_hop",
+        "correctness": 0,
+        "faithfulness": 0,
+        "completeness": 0,
+        "judge_score": 0.0,
+        "judge_reason": "judge_error:TimeoutError",
+        "prompt_tokens": 5325,
+        "completion_tokens": 318,
+        "steps": 2,
+        "tool_failures": 0,
+        "has_refs": true,
+        "latency_ms": 3823,
+        "error": null,
+        "answer": "**凝滞虚影 • 空海之形**（星铁）\n\n- **实装版本**：1.0\n- **可能获取**：虚幻铸铁（量子属性角色晋阶材料）\n- **所在地图**：基座舱段（黑塔空间站）\n- **关卡属性**：量子\n- **建议属性**：物理、风、虚数\n- **可能遭遇**：虚卒•践踏者、虚卒•掠夺者\n- **开拓力消耗**：30\n\n出处：[凝滞虚影 • 空海之形]\n\n补充说明：该页面修订日期为 2024-03-16，是知识库中较旧的条目；若后续版本调整过该关卡掉落或消耗，知识库未收录，建议以游戏内实际显示为准。",
+        "stop_reason": "answer",
+        "guard": {
+          "unique_queries": 2,
+          "dedup_blocked": 0,
+          "forced_finishes": 0,
+          "consecutive_misses": 0
+        },
+        "loop_ms": 3823,
+        "impl": "LG",
+        "tool_seq": [
+          "search_kb({\"game\": \"sr\", \"query\": \"凝滞虚影 空海之形 实现版本 掉落物品\"})",
+          "search_kb({\"game\": \"sr\", \"query\": \"凝滞虚影 空海之形\", \"top_k\": 10})"
+        ]
+      },
+      {
+        "case_id": "sr-008",
+        "category": "numerical",
+        "correctness": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "judge_score": 5.0,
+        "judge_reason": "正确计算了两种情况下的攻击力加成，与证据一致。",
+        "prompt_tokens": 6979,
+        "completion_tokens": 343,
+        "steps": 3,
+        "tool_failures": 0,
+        "has_refs": true,
+        "latency_ms": 3719,
+        "error": null,
+        "answer": "- 速度 <120：+120 攻击力（1000 → 1120）\n- 速度 ≥120：+240 攻击力（1000 → 1240）\n\n注意：百分比攻击力加成通常按角色**基础攻击力**（角色自身 + 光锥）计算，而非面板总攻击力；若 1000 是面板值，实际加成会低于上述数字。[太空封印站]\n\n补充：该套装目前多作为过渡选择，同赛道中「苍穹战线格拉默」等套装在速度达标时通常更优。[太空封印站]\n\n（以上数据出自「太空封印站」页面，修订日期 2025-04-13，可能已随版本变动。）",
+        "stop_reason": "answer",
+        "guard": {
+          "unique_queries": 1,
+          "dedup_blocked": 0,
+          "forced_finishes": 0,
+          "consecutive_misses": 0
+        },
+        "loop_ms": 3719,
+        "impl": "LG",
+        "tool_seq": [
+          "search_kb({\"game\": \"sr\", \"query\": \"太空封印站 位面饰品 攻击力加成 效果\"})",
+          "calculator({\"expression\": \"1000 * 0.12\"})",
+          "calculator({\"expression\": \"1000 * 0.24\"})"
+        ]
+      },
+      {
+        "case_id": "sr-023",
+        "category": "single_hop",
+        "correctness": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "judge_score": 5.0,
+        "judge_reason": "数值与名称均正确，所有信息均有证据支持，覆盖全部要点",
+        "prompt_tokens": 3940,
+        "completion_tokens": 332,
+        "steps": 1,
+        "tool_failures": 0,
+        "has_refs": true,
+        "latency_ms": 3034,
+        "error": null,
+        "answer": "**光锥「我」的诞生**（4星·智识命途）[「我」的诞生]\n\n- **基础生命值**：初始 43 点，满级（80级）952 点\n  - 各阶段：20级 166 / 20+ 218 / 30级 282 / 30+ 352 / 40级 416 / 40+ 486 / 50级 550 / 50+ 619 / 60级 684 / 60+ 753 / 70级 818 / 70+ 887 / 80级 952\n- **技能名称**：画像少女\n- **技能效果**：装备者追加攻击造成的伤害提高 24%/30%/36%/42%/48%；若目标当前生命值百分比 ≤50%，追加攻击伤害额外提高 24%/30%/36%/42%/48%\n- 其他：攻击力初始 21（满级 476）、防御力初始 15；获取方式为跃迁，实装版本 1.0，相关角色黑塔\n\n注：该页面修订日期为 2024-10-31，是知识库中较旧的条目，若后续版本有数值调整，请以游戏内为准。",
+        "stop_reason": "answer",
+        "guard": {
+          "unique_queries": 1,
+          "dedup_blocked": 0,
+          "forced_finishes": 0,
+          "consecutive_misses": 0
+        },
+        "loop_ms": 3034,
+        "impl": "LG",
+        "tool_seq": [
+          "search_kb({\"game\": \"sr\", \"query\": \"光锥「我」的诞生 基础生命值 技能名称\"})"
+        ]
+      },
+      {
+        "case_id": "sr-007",
+        "category": "semantic",
+        "correctness": 4.0,
+        "faithfulness": 2.0,
+        "completeness": 3.0,
+        "judge_score": 3.0,
+        "judge_reason": "太空封印站正确，但格拉默速度阈值错误，其他饰品未直接关联问题核心",
+        "prompt_tokens": 16790,
+        "completion_tokens": 917,
+        "steps": 5,
+        "tool_failures": 0,
+        "has_refs": true,
+        "latency_ms": 7811,
+        "error": null,
+        "answer": "# 星铁位面饰品：兼顾「攻击力」和「速度」的选择\n\n你没有说明具体角色，所以下面按定位分情况说明。核心结论是：**同时提供攻击力和速度收益的位面饰品，主要是「太空封印站」和「苍穹战线格拉默」**。\n\n## 一、输出角色（攻击力倍率）\n\n**1. 太空封印站（2件套）**\n- 攻击力 +12%；速度 ≥120 时，攻击力再 +12%，合计 **24% 攻击力** [太空封印站]\n- 门槛低（120 速度），最容易同时满足「攻击力不够」和「想更快」这两个需求\n- 缺点：攻击力加成容易被稀释，页面明确说它「如今仅作为过渡推荐」[太空封印站]\n\n**2. 苍穹战线格拉默（2件套）**\n- 攻击力 +12%；速度 ≥135 时增伤 +12%，≥160 时增伤 +18% [苍穹战线格拉默]\n- 页面结论：**速度能到 135 时，绝大多数情况下优于太空封印站**；160 阈值过高，泛用性不如繁星竞技场、停转的萨尔索图 [苍穹战线格拉默]\n\n**选择建议**：速度能堆到 135 就选格拉默；只能到 120 左右就选封印站。两者都提供 12% 攻击力，差别在速度阈值对应的额外收益。\n\n## 二、辅助角",
+        "stop_reason": "answer",
+        "guard": {
+          "unique_queries": 4,
+          "dedup_blocked": 0,
+          "forced_finishes": 0,
+          "consecutive_misses": 0
+        },
+        "loop_ms": 7811,
+        "impl": "LG",
+        "tool_seq": [
+          "list_games({})",
+          "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 攻击力 速度 推荐\", \"top_k\": 10})",
+          "get_page({\"game\": \"sr\", \"title\": \"太空封印站\"})",
+          "search_kb({\"game\": \"sr\", \"query\": \"苍穹战线格拉默 两件套效果 攻击力 速度要求\", \"top_k\": 5})",
+          "search_kb({\"game\": \"sr\", \"query\": \"沉陆海域露莎卡 不老者的仙舟 两件套效果 攻击力\", \"top_k\": 5})"
+        ]
+      },
+      {
+        "case_id": "sr-011",
+        "category": "semantic",
+        "correctness": 5.0,
+        "faithfulness": 4.0,
+        "completeness": 5.0,
+        "judge_score": 4.5,
+        "judge_reason": "正确引用繁星竞技场效果，但对比饰品未在证据中出现",
+        "prompt_tokens": 5358,
+        "completion_tokens": 467,
+        "steps": 2,
+        "tool_failures": 0,
+        "has_refs": true,
+        "latency_ms": 4216,
+        "error": null,
+        "answer": "# 推荐：繁星竞技场（2件套）\n\n**效果**：暴击率 +8%；当前暴击率 ≥70% 时，普攻和战技伤害 +20% [繁星竞技场]\n\n**为什么适合你**\n- 你缺暴击率：两件套直接给 8% 暴击率，正好补上你差的那一点 [繁星竞技场]\n- 你要普攻和战技增伤：20% 增伤正好覆盖普攻和战技，是这套的核心收益 [繁星竞技场]\n- 获取：模拟宇宙·第七世界、差分宇宙 [繁星竞技场]\n\n**注意**\n- 增伤有门槛：面板暴击率必须 ≥70% 才触发，否则只有 8% 暴击率，等于白穿 [繁星竞技场]\n- 如果堆不到 70%，可以考虑先换别的位面饰品过渡，或者让队友提供暴击率加成 [那刻夏/攻略]\n\n**对比参考**\n- 停转的萨尔索图：同样 +8% 暴击率，但门槛是 50%，增伤只给终结技和追加攻击，不适合普攻和战技流派 [停转的萨尔索图]\n- 坠星启航地：+8% 暴击率，但增伤是暴击伤害，且有开拓同行角色限制 [坠星启航地]\n\n**提醒**：繁星竞技场页面修订日期为 2025-04-13，数值可能已随版本调整，建议进游戏确认当前描述。\n\n如果你告诉我具体角色，我可以查该角色的攻略页，看有没",
+        "stop_reason": "answer",
+        "guard": {
+          "unique_queries": 1,
+          "dedup_blocked": 0,
+          "forced_finishes": 0,
+          "consecutive_misses": 0
+        },
+        "loop_ms": 4216,
+        "impl": "LG",
+        "tool_seq": [
+          "list_games({})",
+          "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 暴击率 提升普攻和战技伤害\", \"top_k\": 8})"
+        ]
+      },
+      {
+        "case_id": "sr-013",
+        "category": "semantic",
+        "correctness": 5.0,
+        "faithfulness": 2.0,
+        "completeness": 5.0,
+        "judge_score": 3.5,
+        "judge_reason": "正确提及名称和效果，但获取方式错误且数值无依据",
+        "prompt_tokens": 16879,
+        "completion_tokens": 633,
+        "steps": 3,
+        "tool_failures": 0,
+        "has_refs": true,
+        "latency_ms": 6156,
+        "error": null,
+        "answer": "**有，最直接的是「生命的翁瓦克」2件套。**\n\n- **效果**：能量恢复效率 +5%；当装备者速度 ≥120 时，**进入战斗立刻使行动提前 40%**，这就是“开局抢先手”的核心机制 [生命的翁瓦克]。\n- **获取**：模拟宇宙·第四世界、差分宇宙 [生命的翁瓦克]。\n- **适合谁**：有辅助能力的角色（存护、丰饶、同谐、虚无等命途）都能带；对依赖终结技的辅助来说，这 5% 回能也很实用，可以先手给队友上增益 [生命的翁瓦克]。例如佩拉、忘归人、记忆主、缇宝等角色的配装里都把它列为可选或推荐位 [佩拉/攻略][忘归人/攻略][开拓者•记忆/攻略][缇宝/攻略]。\n- **注意**：行动提前 40% 有**速度 ≥120** 的门槛，速度不够就只吃到回能，所以脚部建议速度鞋、副词条堆速度。\n\n**其他相关但不等同的选项：**\n- 「劫火莲灯铸炼宫」2件套：提供速度 + 击破特攻，是击破队（流萤、忘归人、加拉赫等）的常用位面饰品，靠速度提升出手频率，但没有“开局行动提前” [劫火莲灯铸炼宫][流萤/攻略]。\n- 「晨昏交界的翔鹰」4件套（隧洞遗器，不是位面饰品）：大招后下一次行动",
+        "stop_reason": "answer",
+        "guard": {
+          "unique_queries": 3,
+          "dedup_blocked": 0,
+          "forced_finishes": 0,
+          "consecutive_misses": 0
+        },
+        "loop_ms": 6156,
+        "impl": "LG",
+        "tool_seq": [
+          "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 提升速度 抢先手 战斗开始\", \"top_k\": 8})",
+          "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 速度加成 效果命中 遗器套装\", \"top_k\": 8})",
+          "get_page({\"game\": \"sr\", \"title\": \"生命的翁瓦克\"})"
+        ]
+      },
+      {
+        "case_id": "sr-025",
+        "category": "multi_hop",
+        "correctness": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "judge_score": 5.0,
+        "judge_reason": "与参考答案完全一致，覆盖全部要点且依据充分",
+        "prompt_tokens": 3930,
+        "completion_tokens": 215,
+        "steps": 1,
+        "tool_failures": 0,
+        "has_refs": true,
+        "latency_ms": 2941,
+        "error": null,
+        "answer": "**折断的龙骨（位面饰品，2件套）**\n\n- **效果抵抗门槛**：装备者的效果抵抗 **≥30%**（套装本身先提供 10% 效果抵抗）[折断的龙骨]\n- **提升对象**：达到门槛后，提升的是**我方全体**的暴击伤害，+10%，并非只提升装备者自己[折断的龙骨]\n- 补充：该暴伤增益在多名角色佩戴时可以叠加；自带效果抵抗行迹的辅助（如布洛妮娅）更容易达标[折断的龙骨]\n\n数据来源页面修订日期为 2025-04-13，若后续版本有调整，请以游戏内实际数值为准。",
+        "stop_reason": "answer",
+        "guard": {
+          "unique_queries": 1,
+          "dedup_blocked": 0,
+          "forced_finishes": 0,
+          "consecutive_misses": 0
+        },
+        "loop_ms": 2940,
+        "impl": "LG",
+        "tool_seq": [
+          "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 折断的龙骨 效果抵抗 门槛 暴击伤害\"})"
+        ]
+      },
+      {
+        "case_id": "sr-028",
+        "category": "multi_hop",
+        "correctness": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "judge_score": 5.0,
+        "judge_reason": "数值与描述均准确匹配证据，完整覆盖问题要点",
+        "prompt_tokens": 4189,
+        "completion_tokens": 216,
+        "steps": 1,
+        "tool_failures": 0,
+        "has_refs": true,
+        "latency_ms": 2400,
+        "error": null,
+        "answer": "**奇想蕉乐园（位面饰品，2件套）**\n\n- 基础效果：使装备者的暴击伤害提高 **16.0%**。\n- 当存在装备者召唤的目标时：暴击伤害**额外**提高 **32.0%**，也就是总共 **48.0%**（16% + 32%）。\n- 获取方式：差分宇宙；实装版本 2.5；相关角色：波提欧、乱破、不死途（景元的神君也属于召唤物，可以吃满加成）[奇想蕉乐园][景元/攻略]\n\n数据来源页面修订日期为 2026-09-10，属较新条目。",
+        "stop_reason": "answer",
+        "guard": {
+          "unique_queries": 1,
+          "dedup_blocked": 0,
+          "forced_finishes": 0,
+          "consecutive_misses": 0
+        },
+        "loop_ms": 2400,
+        "impl": "LG",
+        "tool_seq": [
+          "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 奇想蕉乐园 暴击伤害提升 召唤目标\"})"
+        ]
+      },
+      {
+        "case_id": "sr-009",
+        "category": "unanswerable",
+        "correctness": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "judge_score": 5.0,
+        "judge_reason": "准确说明无法确认，符合参考答案要求",
+        "prompt_tokens": 5039,
+        "completion_tokens": 359,
+        "steps": 2,
+        "tool_failures": 0,
+        "has_refs": true,
+        "latency_ms": 4246,
+        "error": null,
+        "answer": "**知识库未收录「下一个版本新增角色」的信息。**\n\n原因说明：\n- 知识库是游戏内数据/攻略的静态 wiki 语料（星铁 3932 片段、绝区零 1498 片段、原神 5413 片段），只包含已实装内容的条目，没有版本前瞻、测试服（创作体验服）爆料或官方直播预告类内容。\n- 我检索了「下一个版本新增角色 技能介绍 版本前瞻」，返回的都是已实装角色的攻略与图鉴（如流萤/攻略、波提欧、希儿等），没有任何未实装角色的技能条目。\n\n另外两点需要你确认：\n1. 你没说明是**哪款游戏**（星铁 / 绝区零 / 原神），三者的版本节奏和角色池完全不同。\n2. 「下一个版本」是相对当前时间而言的，而知识库条目的修订日期跨度很大（最早 2024-05-12，最新到 2026-08-30），我无法据此判断你所在的时间点对应哪个版本。\n\n如果你能告诉我具体游戏和当前版本号，我可以帮你查该版本**已实装**角色的技能、配装与阵容；前瞻爆料类信息建议看官方直播或公告，知识库确实没有。",
+        "stop_reason": "answer",
+        "guard": {
+          "unique_queries": 1,
+          "dedup_blocked": 0,
+          "forced_finishes": 0,
+          "consecutive_misses": 1
+        },
+        "loop_ms": 4246,
+        "impl": "LG",
+        "tool_seq": [
+          "list_games({})",
+          "search_kb({\"query\": \"下一个版本新增角色 技能介绍 版本前瞻\", \"top_k\": 10})"
+        ]
+      },
+      {
+        "case_id": "sr-031",
+        "category": "unanswerable",
+        "correctness": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 4.0,
+        "judge_score": 5.0,
+        "judge_reason": "未编造信息，准确说明知识库限制",
+        "prompt_tokens": 49815,
+        "completion_tokens": 996,
+        "steps": 8,
+        "tool_failures": 2,
+        "has_refs": true,
+        "latency_ms": 9336,
+        "error": null,
+        "answer": "**结论：知识库未收录「星铁 4.0 版本实装的新遗器套装及其两件套效果」这一信息，因此无法给出确切答案。**\n\n已检索到的相关线索（均不足以回答你的问题）：\n\n- 知识库的《遗器》总览页（修订 2026-07-15）只列出了遗器的基础机制、获取途径、合成与强化规则，**没有按版本标注各套装的实装版本，也没有列出套装效果**。\n- 检索到的遗器套装效果都来自角色攻略页的配装推荐，例如「恶海逐波的船长」二件套提供 16% 暴击伤害、「幽锁深牢的系囚」二件套提供 12% 攻击力、「沉欢醉饮的海隅」二件套提供 12% 攻击力与 24% 持续伤害增伤等，但这些套装**都没有标注实装版本**，无法确认哪些属于 4.0 版本新增。\n- 与 4.0 版本相关的条目只有拟造花萼关卡「藏珍之蕾 • 二相乐园」「回忆之蕾 • 二相乐园」（实装版本 4.0），它们只涉及材料掉落，与遗器套装无关。\n- 二相乐园相关的遗器「自匿星芒的隐士」「闪耀功勋的魔法少女」出现在历战余响「坏灭的喜剧」的掉落列表中，而该关卡标注的实装版本是 **4.4**，并非 4.0；并且知识库中没有这两个套装的独立效果页面，我尝试调取时",
+        "stop_reason": "max_steps",
+        "guard": {
+          "unique_queries": 6,
+          "dedup_blocked": 0,
+          "forced_finishes": 2,
+          "consecutive_misses": 2
+        },
+        "loop_ms": 9336,
+        "impl": "LG",
+        "tool_seq": [
+          "search_kb({\"game\": \"sr\", \"query\": \"星铁 4.0 版本新遗器套装 两件套效果\"})",
+          "search_kb({\"game\": \"sr\", \"query\": \"遗器套装 两件套效果 列表\"})",
+          "search_kb({\"game\": \"sr\", \"query\": \"4.0版本 新增遗器 隧洞遗器 位面饰品 实装\", \"top_k\": 10})",
+          "get_page({\"game\": \"sr\", \"title\": \"遗器\"})",
+          "search_kb({\"game\": \"sr\", \"query\": \"版本更新 4.0 新角色 新遗器 上线内容\", \"top_k\": 10})",
+          "search_kb({\"game\": \"sr\", \"query\": \"二相乐园 自匿星芒的隐士 闪耀功勋的魔法少女 套装效果\", \"top_k\": 10})",
+          "get_page({\"game\": \"sr\", \"title\": \"自匿星芒的隐士\"})",
+          "get_page({\"game\": \"sr\", \"title\": \"闪耀功勋的魔法少女\"})"
+        ]
+      },
+      {
+        "case_id": "sr-032",
+        "category": "unanswerable",
+        "correctness": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "judge_score": 5.0,
+        "judge_reason": "正确指出无三件套且事实一致",
+        "prompt_tokens": 5123,
+        "completion_tokens": 332,
+        "steps": 2,
+        "tool_failures": 0,
+        "has_refs": true,
+        "latency_ms": 3783,
+        "error": null,
+        "answer": "**太空封印站是位面饰品，只有两件套效果，没有三件套效果。**\n\n- **两件套效果**：使装备者的攻击力提高 12%；当装备者的速度 ≥ 120 时，攻击力额外提高 12%（合计最高 24% 攻击力）[太空封印站]\n- **部位**：位面球「黑塔」的空间站点、连结绳「黑塔」的漫历轨迹 [太空封印站]\n- **获取**：模拟宇宙·第三世界、差分宇宙，或完成开拓任务「时不我待，我的朋友」[太空封印站]\n- **实装版本**：1.0 [太空封印站]\n\n补充：星铁的遗器分为隧洞遗器（4件套）和位面饰品（2件套），位面饰品本身就只有 2 件套效果，不存在三件套 [太空封印站]。\n\n该页面最后修订于 2025-04-13，数值可能已随版本变动，建议以游戏内实际描述为准。",
+        "stop_reason": "answer",
+        "guard": {
+          "unique_queries": 2,
+          "dedup_blocked": 0,
+          "forced_finishes": 0,
+          "consecutive_misses": 0
+        },
+        "loop_ms": 3783,
+        "impl": "LG",
+        "tool_seq": [
+          "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 太空封印站 套装效果\"})",
+          "get_page({\"game\": \"sr\", \"title\": \"太空封印站\"})"
+        ]
+      },
+      {
+        "case_id": "sr-030",
+        "category": "numerical",
+        "correctness": 5.0,
+        "faithfulness": 5.0,
+        "completeness": 5.0,
+        "judge_score": 5.0,
+        "judge_reason": "正确引用证据说明触发条件及叠加机制",
+        "prompt_tokens": 3928,
+        "completion_tokens": 277,
+        "steps": 1,
+        "tool_failures": 0,
+        "has_refs": true,
+        "latency_ms": 2613,
+        "error": null,
+        "answer": "**结论：暴击伤害提高 10%（我方全体）。**\n\n- 折断的龙骨（位面饰品，2件套）：效果抵抗提高 10%；当装备者效果抵抗 ≥ 30% 时，**我方全体暴击伤害提高 10%** [折断的龙骨]。\n- 你问的「效果抵抗 25%」这个数值本身不触发效果：触发条件是**效果抵抗 ≥ 30%**，25% 未达阈值，此时只有 2 件套自带的 +10% 效果抵抗，**不会**获得暴伤加成 [折断的龙骨]。\n- 若角色自身效果抵抗为 25%，加上套装 10% 后为 35%，则满足阈值，全队暴伤 +10%（该暴伤增益可叠加，多名角色佩戴可叠加）[折断的龙骨]。\n\n补充：该页面修订日期为 2025-04-13，数值可能已随版本变动，建议以游戏内最新描述为准。",
+        "stop_reason": "answer",
+        "guard": {
+          "unique_queries": 1,
+          "dedup_blocked": 0,
+          "forced_finishes": 0,
+          "consecutive_misses": 0
+        },
+        "loop_ms": 2613,
+        "impl": "LG",
+        "tool_seq": [
+          "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 折断的龙骨 效果抵抗 暴击伤害\"})"
+        ]
+      }
+    ]
+  }
+]

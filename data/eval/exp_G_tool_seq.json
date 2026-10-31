@@ -1,0 +1,257 @@
+{
+ "n": 15,
+ "identical": 9,
+ "different_cases": [
+  "sr-007",
+  "sr-008",
+  "sr-009",
+  "sr-011",
+  "sr-031",
+  "sr-032"
+ ],
+ "per_case": [
+  {
+   "case_id": "sr-001",
+   "identical": true,
+   "missing_side": false,
+   "hand_calls": 1,
+   "lg_calls": 1,
+   "hand": [
+    "search_kb({\"game\": \"sr\", \"query\": \"光锥「我」的诞生 星级 命途\"})"
+   ],
+   "lg": [
+    "search_kb({\"game\": \"sr\", \"query\": \"光锥「我」的诞生 星级 命途\"})"
+   ]
+  },
+  {
+   "case_id": "sr-002",
+   "identical": true,
+   "missing_side": false,
+   "hand_calls": 1,
+   "lg_calls": 1,
+   "hand": [
+    "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 太空封印站 两件套效果\"})"
+   ],
+   "lg": [
+    "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 太空封印站 两件套效果\"})"
+   ]
+  },
+  {
+   "case_id": "sr-004",
+   "identical": true,
+   "missing_side": false,
+   "hand_calls": 2,
+   "lg_calls": 2,
+   "hand": [
+    "search_kb({\"query\": \"NPC 阿然 称号\"})",
+    "list_games({})"
+   ],
+   "lg": [
+    "search_kb({\"query\": \"NPC 阿然 称号\"})",
+    "list_games({})"
+   ]
+  },
+  {
+   "case_id": "sr-006",
+   "identical": true,
+   "missing_side": false,
+   "hand_calls": 2,
+   "lg_calls": 2,
+   "hand": [
+    "search_kb({\"game\": \"sr\", \"query\": \"凝滞虚影 空海之形 实现版本 掉落物品\"})",
+    "search_kb({\"game\": \"sr\", \"query\": \"凝滞虚影 空海之形\", \"top_k\": 10})"
+   ],
+   "lg": [
+    "search_kb({\"game\": \"sr\", \"query\": \"凝滞虚影 空海之形 实现版本 掉落物品\"})",
+    "search_kb({\"game\": \"sr\", \"query\": \"凝滞虚影 空海之形\", \"top_k\": 10})"
+   ]
+  },
+  {
+   "case_id": "sr-007",
+   "identical": false,
+   "missing_side": false,
+   "hand_calls": 4,
+   "lg_calls": 5,
+   "hand": [
+    "list_games({})",
+    "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 攻击力 速度 推荐\", \"top_k\": 10})",
+    "get_page({\"game\": \"sr\", \"title\": \"太空封印站\"})",
+    "search_kb({\"game\": \"sr\", \"query\": \"苍穹战线格拉默 位面饰品 两件套效果 攻击力 速度\", \"top_k\": 6})"
+   ],
+   "lg": [
+    "list_games({})",
+    "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 攻击力 速度 推荐\", \"top_k\": 10})",
+    "get_page({\"game\": \"sr\", \"title\": \"太空封印站\"})",
+    "search_kb({\"game\": \"sr\", \"query\": \"苍穹战线格拉默 两件套效果 攻击力 速度要求\", \"top_k\": 5})",
+    "search_kb({\"game\": \"sr\", \"query\": \"沉陆海域露莎卡 不老者的仙舟 两件套效果 攻击力\", \"top_k\": 5})"
+   ]
+  },
+  {
+   "case_id": "sr-008",
+   "identical": false,
+   "missing_side": false,
+   "hand_calls": 3,
+   "lg_calls": 3,
+   "hand": [
+    "search_kb({\"game\": \"sr\", \"query\": \"太空封印站 位面饰品 攻击力加成 效果\"})",
+    "calculator({\"expression\": \"1000*0.12\"})",
+    "calculator({\"expression\": \"1000*0.24\"})"
+   ],
+   "lg": [
+    "search_kb({\"game\": \"sr\", \"query\": \"太空封印站 位面饰品 攻击力加成 效果\"})",
+    "calculator({\"expression\": \"1000 * 0.12\"})",
+    "calculator({\"expression\": \"1000 * 0.24\"})"
+   ]
+  },
+  {
+   "case_id": "sr-009",
+   "identical": false,
+   "missing_side": false,
+   "hand_calls": 7,
+   "lg_calls": 2,
+   "hand": [
+    "list_games({})",
+    "search_kb({\"game\": \"sr\", \"query\": \"下个版本新增角色 技能介绍\", \"top_k\": 5})",
+    "search_kb({\"game\": \"zzz\", \"query\": \"下个版本新增角色 技能介绍\", \"top_k\": 5})",
+    "search_kb({\"game\": \"ys\", \"query\": \"下个版本新增角色 技能介绍\", \"top_k\": 5})",
+    "search_kb({\"game\": \"sr\", \"query\": \"最新版本号 版本更新内容 新角色上线\", \"top_k\": 8})",
+    "search_kb({\"game\": \"zzz\", \"query\": \"最新版本 新代理人 实装版本\", \"top_k\": 8})",
+    "search_kb({\"game\": \"ys\", \"query\": \"最新版本 新角色 实装版本 卡池\", \"top_k\": 8})"
+   ],
+   "lg": [
+    "list_games({})",
+    "search_kb({\"query\": \"下一个版本新增角色 技能介绍 版本前瞻\", \"top_k\": 10})"
+   ]
+  },
+  {
+   "case_id": "sr-011",
+   "identical": false,
+   "missing_side": false,
+   "hand_calls": 2,
+   "lg_calls": 2,
+   "hand": [
+    "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 暴击率 提升普攻和战技伤害\", \"top_k\": 10})",
+    "list_games({})"
+   ],
+   "lg": [
+    "list_games({})",
+    "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 暴击率 提升普攻和战技伤害\", \"top_k\": 8})"
+   ]
+  },
+  {
+   "case_id": "sr-013",
+   "identical": true,
+   "missing_side": false,
+   "hand_calls": 3,
+   "lg_calls": 3,
+   "hand": [
+    "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 提升速度 抢先手 战斗开始\", \"top_k\": 8})",
+    "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 速度加成 效果命中 遗器套装\", \"top_k\": 8})",
+    "get_page({\"game\": \"sr\", \"title\": \"生命的翁瓦克\"})"
+   ],
+   "lg": [
+    "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 提升速度 抢先手 战斗开始\", \"top_k\": 8})",
+    "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 速度加成 效果命中 遗器套装\", \"top_k\": 8})",
+    "get_page({\"game\": \"sr\", \"title\": \"生命的翁瓦克\"})"
+   ]
+  },
+  {
+   "case_id": "sr-023",
+   "identical": true,
+   "missing_side": false,
+   "hand_calls": 1,
+   "lg_calls": 1,
+   "hand": [
+    "search_kb({\"game\": \"sr\", \"query\": \"光锥「我」的诞生 基础生命值 技能名称\"})"
+   ],
+   "lg": [
+    "search_kb({\"game\": \"sr\", \"query\": \"光锥「我」的诞生 基础生命值 技能名称\"})"
+   ]
+  },
+  {
+   "case_id": "sr-025",
+   "identical": true,
+   "missing_side": false,
+   "hand_calls": 1,
+   "lg_calls": 1,
+   "hand": [
+    "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 折断的龙骨 效果抵抗 门槛 暴击伤害\"})"
+   ],
+   "lg": [
+    "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 折断的龙骨 效果抵抗 门槛 暴击伤害\"})"
+   ]
+  },
+  {
+   "case_id": "sr-028",
+   "identical": true,
+   "missing_side": false,
+   "hand_calls": 1,
+   "lg_calls": 1,
+   "hand": [
+    "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 奇想蕉乐园 暴击伤害提升 召唤目标\"})"
+   ],
+   "lg": [
+    "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 奇想蕉乐园 暴击伤害提升 召唤目标\"})"
+   ]
+  },
+  {
+   "case_id": "sr-030",
+   "identical": true,
+   "missing_side": false,
+   "hand_calls": 1,
+   "lg_calls": 1,
+   "hand": [
+    "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 折断的龙骨 效果抵抗 暴击伤害\"})"
+   ],
+   "lg": [
+    "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 折断的龙骨 效果抵抗 暴击伤害\"})"
+   ]
+  },
+  {
+   "case_id": "sr-031",
+   "identical": false,
+   "missing_side": false,
+   "hand_calls": 8,
+   "lg_calls": 8,
+   "hand": [
+    "search_kb({\"game\": \"sr\", \"query\": \"星铁 4.0 版本新遗器套装 两件套效果\"})",
+    "search_kb({\"game\": \"sr\", \"query\": \"遗器套装 两件套效果 列表\"})",
+    "search_kb({\"game\": \"sr\", \"query\": \"4.0版本 新增遗器 隧洞遗器 位面饰品 实装\", \"top_k\": 10})",
+    "get_page({\"game\": \"sr\", \"title\": \"遗器\"})",
+    "search_kb({\"game\": \"sr\", \"query\": \"4.0 版本更新内容 新角色 新遗器 版本前瞻\", \"top_k\": 10})",
+    "search_kb({\"game\": \"sr\", \"query\": \"二相乐园 自匿星芒的隐士 闪耀功勋的魔法少女 套装效果\", \"top_k\": 10})",
+    "get_page({\"game\": \"sr\", \"title\": \"自匿星芒的隐士\"})",
+    "get_page({\"game\": \"sr\", \"title\": \"闪耀功勋的魔法少女\"})"
+   ],
+   "lg": [
+    "search_kb({\"game\": \"sr\", \"query\": \"星铁 4.0 版本新遗器套装 两件套效果\"})",
+    "search_kb({\"game\": \"sr\", \"query\": \"遗器套装 两件套效果 列表\"})",
+    "search_kb({\"game\": \"sr\", \"query\": \"4.0版本 新增遗器 隧洞遗器 位面饰品 实装\", \"top_k\": 10})",
+    "get_page({\"game\": \"sr\", \"title\": \"遗器\"})",
+    "search_kb({\"game\": \"sr\", \"query\": \"版本更新 4.0 新角色 新遗器 上线内容\", \"top_k\": 10})",
+    "search_kb({\"game\": \"sr\", \"query\": \"二相乐园 自匿星芒的隐士 闪耀功勋的魔法少女 套装效果\", \"top_k\": 10})",
+    "get_page({\"game\": \"sr\", \"title\": \"自匿星芒的隐士\"})",
+    "get_page({\"game\": \"sr\", \"title\": \"闪耀功勋的魔法少女\"})"
+   ]
+  },
+  {
+   "case_id": "sr-032",
+   "identical": false,
+   "missing_side": false,
+   "hand_calls": 1,
+   "lg_calls": 2,
+   "hand": [
+    "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 太空封印站 套装效果\"})"
+   ],
+   "lg": [
+    "search_kb({\"game\": \"sr\", \"query\": \"位面饰品 太空封印站 套装效果\"})",
+    "get_page({\"game\": \"sr\", \"title\": \"太空封印站\"})"
+   ]
+  }
+ ],
+ "baseline": {
+  "n": 15,
+  "tool_seq_identical": 10,
+  "steps_identical": 12
+ }
+}
