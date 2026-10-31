@@ -948,6 +948,70 @@ class DeliverableAgent:
         await self._checkpoint(res, plan, subject, res.subtasks, "done")
         return res
 
+    async def plan_draft(self, question: str, *, game: str | None = None) -> DeliverableResult:
+        """只规划、不执行：落一份 `phase=awaiting_approval` 的快照。
+
+        审批（HITL）的第一半：把计划先交给调用方看/改，改完再 `approve`。
+        与 `run` 的区别是**不跑任何子任务**，所以只花一次规划调用。
+        """
+        t0 = time.perf_counter()
+        ctx = self.ctx or ToolContext.build(game or self.s.game_primary)
+        if game:
+            ctx.game = game
+        res = DeliverableResult(
+            run_id=uuid.uuid4().hex[:16], topic=question, question=question,
+            game=ctx.game, generated_at=_stamp_now(),
+        )
+        res.topic, subject, plan = await self.plan(question)
+        res.subject = subject
+        res.plan = plan
+        res.elapsed_ms = int((time.perf_counter() - t0) * 1000)
+        await self._checkpoint(res, plan, subject, [], "awaiting_approval")
+        return res
+
+    async def approve(
+        self, run_id: str, plan: list[dict] | None = None
+    ) -> DeliverableResult:
+        """批准草稿：`plan=None` 用原计划；传 plan 则用**改过的计划**执行。
+
+        语义：
+        - 只接受 `awaiting_approval` / `running` / `planned` 的快照，
+          已 `done` 的直接拒绝 —— 避免"审批"变成第二次重跑；
+        - 计划会被校验（1–6 个、名字唯一、每个都有 goal 与至少一条 query）；
+        - 已完成的子任务按名字复用（崩溃后重新审批不会重复花钱）。
+        """
+        t0 = time.perf_counter()
+        ckpt = await self.store.load(run_id)
+        if ckpt is None:
+            raise KeyError(run_id)
+        if ckpt.phase == "done":
+            raise RuntimeError("该 run 已完成，不能再审批执行")
+        approved = _validate_plan(plan if plan is not None else ckpt.plan)
+
+        ctx = self.ctx or ToolContext.build(ckpt.game)
+        ctx.game = ckpt.game
+        res = DeliverableResult(
+            run_id=ckpt.run_id, topic=ckpt.topic, question=ckpt.question,
+            game=ckpt.game, subject=ckpt.subject, plan=approved,
+            generated_at=_stamp_now(),
+        )
+        done = {
+            str(st.get("name", "")): _subtask_from_dict(st) for st in ckpt.subtasks
+        }
+        completed: list[SubtaskResult] = list(done.values())
+
+        async def on_done(st: SubtaskResult) -> None:
+            completed.append(st)
+            await self._checkpoint(res, approved, ckpt.subject, completed, "running")
+
+        await self._checkpoint(res, approved, ckpt.subject, completed, "running")
+        res.subtasks = await self._execute_plan(
+            approved, ctx, ckpt.subject, done=done, on_done=on_done
+        )
+        self._finalize(res, t0, ckpt.subject)
+        await self._checkpoint(res, approved, ckpt.subject, res.subtasks, "done")
+        return res
+
     def _finalize(self, res: DeliverableResult, t0: float, subject: str) -> None:
         res.conflicts = detect_conflicts([f for st in res.subtasks for f in st.facts])
         res.elapsed_ms = int((time.perf_counter() - t0) * 1000)
@@ -1009,6 +1073,42 @@ def _subtask_from_dict(data: dict) -> SubtaskResult:
     d = dict(data)
     d["facts"] = [Fact(**f) for f in d.get("facts") or []]
     return SubtaskResult(**d)
+
+
+_PLAN_MIN, _PLAN_MAX = 1, 6
+
+
+def _validate_plan(plan: list[dict]) -> list[dict]:
+    """校验审批后的计划，返回**归一化副本**（不改调用方的对象）。
+
+    为什么在服务端再校验一次：计划可能被前端/脚本改过，而它直接决定
+    要发多少次检索、抽多少次事实。空计划会产出"什么都没有"的假交付物，
+    重名会让快照按名字复用时张冠李戴。
+    """
+    if not isinstance(plan, list) or not (_PLAN_MIN <= len(plan) <= _PLAN_MAX):
+        raise ValueError(f"计划必须包含 {_PLAN_MIN}–{_PLAN_MAX} 个子任务")
+    seen: set[str] = set()
+    out: list[dict] = []
+    for spec in plan:
+        if not isinstance(spec, dict):
+            raise ValueError("每个子任务必须是对象")
+        name = str(spec.get("name", "")).strip()
+        goal = str(spec.get("goal", "")).strip()
+        queries = spec.get("queries") or []
+        if not name or len(name) > 40:
+            raise ValueError("子任务 name 不能为空且不超过 40 字")
+        if name in seen:
+            raise ValueError(f"子任务名重复：{name}")
+        if not goal:
+            raise ValueError(f"子任务 {name} 缺少 goal")
+        if not isinstance(queries, list):
+            raise ValueError(f"子任务 {name} 的 queries 必须是数组")
+        cleaned = [str(q).strip() for q in queries if str(q).strip()]
+        if not cleaned:
+            raise ValueError(f"子任务 {name} 至少需要一条 query")
+        seen.add(name)
+        out.append({"name": name, "goal": goal[:200], "queries": cleaned[:6]})
+    return out
 
 
 class ParallelDeliverableAgent(DeliverableAgent):

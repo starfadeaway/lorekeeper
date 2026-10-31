@@ -1169,6 +1169,43 @@ button.mini {
   padding: 12px 0;
 }
 
+/* 审批卡片：默认全选，取消勾选即跳过该子任务 */
+.dv-plan {
+  margin-top: 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: var(--panel, transparent);
+}
+.dv-plan-item {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  padding: 7px 0;
+  cursor: pointer;
+  border-top: 1px dashed var(--line);
+}
+.dv-plan-item input {
+  margin-top: 3px;
+  flex: 0 0 auto;
+}
+.dv-plan-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 13px;
+}
+.dv-plan-actions {
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+.dv-plan-actions .muted {
+  margin-right: auto;
+  font-size: 12px;
+}
+
 .dv-result {
   margin-top: 14px;
 }

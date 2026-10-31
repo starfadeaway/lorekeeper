@@ -243,3 +243,19 @@ export interface DeliverableResponse {
   conflicts_total: number
   elapsed_ms: number
 }
+
+/** 审批流里的单个子任务（与 DeliverableJson.plan 同构）。 */
+export interface DeliverablePlanItem {
+  name: string
+  goal: string
+  queries: string[]
+}
+
+/** 只出计划、不执行时返回的草稿。 */
+export interface DeliverablePlanDraft {
+  run_id: string
+  topic: string
+  subject: string
+  plan: DeliverablePlanItem[]
+  elapsed_ms: number
+}

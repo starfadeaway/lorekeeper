@@ -532,7 +532,7 @@ cd lorekeeper\backend
 | 可用性 | Chat 降级链：只对 429/5xx/超时降级，400/401 不重试；降级在响应 `fallback` 字段与 `/api/health` 留痕（`docs/fallback_chain.md`） |
 | 数据时效 | 版本更新：实测 wiki `recentchanges` 可穿过 WAF。⚠️ **两个口径别混**：落盘产物 `delta_sync_sr_7d.json` 是 **148/706 页（20.9%）、13 次请求**（`lower_bound: true`，窗口被 WAF 截断在 1003 页）；正文另记了一次翻完全部 2922 条的运行，得 **162 页 / 15 次请求**，但**那一跑没有落盘产物**。全量重抓要 71 次。⚠️ 全站口径 1157 页会得出"增量无意义"的**相反结论**。内容指纹已落库（1401 页 + 10843 chunk 100% 覆盖）；「归一化把格式误判从 100% 压到 0」是**探针按构造必然如此**（比原始字节则任何重格式化都算不同），别当战果讲（`docs/delta_sync.md`） |
 | Agent | 手搓 ReAct，工具注册表 4 个（`search_kb` / `get_page` / `calculator` / `list_games`），**生产默认只挂 `search_kb`**（`AGENT_TOOLS`，侧栏显示的就是实际生效的那份） + 4 道安全阀 + 熔断；不可答问题从 7 步/30317 token 降到 4 步/6514 token |
-| 交付物 | 规划 → 子任务 → 合并 → 冲突 → 渲染；并行执行（手写 `asyncio.gather`，**保序**）实测 n=18：墙钟 **−46%**（逐题配对中位数 0.537）、token +0.5%、36 次 0 error；**断点续跑**：每子任务落快照到 `data/runs/deliverable/<run_id>.json`，`POST /api/deliverable/{run_id}/resume` 只跑未完成项；**未迁 LangGraph**，理由与定价见 [ADR-001](docs/adr_001_orchestration.md) |
+| 交付物 | 规划 → 子任务 → 合并 → 冲突 → 渲染；并行执行（手写 `asyncio.gather`，**保序**）实测 n=18：墙钟 **−46%**（逐题配对中位数 0.537）、token +0.5%、36 次 0 error；**断点续跑**：每子任务落快照到 `data/runs/deliverable/<run_id>.json`，`POST /api/deliverable/{run_id}/resume` 只跑未完成项；**审批**：`/deliverable/plan` 只出计划、`/deliverable/{run_id}/approve` 按可改计划执行；**未迁 LangGraph**，理由与定价见 [ADR-001](docs/adr_001_orchestration.md) |
 | 框架对照 | 实验 G（sr 15 条，HAND vs LangGraph）：judge / 步数 / 延迟 / token **均无可测差异**（p 全 > 0.3，n=13 有效配对）；judge Δ=0.077 小于 A/A 噪声底 0.357 → **不迁**（[framework_comparison.md](docs/framework_comparison.md)） |
 | 多库路由 | 三态（库内/越界/未提及）；越界走无工具单轮，实测 0 步 / 1.1s，库内 3–5 步 / 5–8s |
 | MCP | 4 个工具以标准 MCP（SDK 2.3.0）暴露给外部 host，stdio 传输；**适配层与内置实现输出逐字符一致由守卫实跑保证**（16 项，真 `mcp.Client` 连真 server）。MCP 是**独立 server 入口**，本项目 Agent 始终走进程内直调，**两者之间没有运行时开关**（曾经有过 `TOOL_TRANSPORT`，核实发现无任何代码分支读它，已删），见 [docs/mcp.md](docs/mcp.md) |
@@ -542,7 +542,7 @@ cd lorekeeper\backend
 | 评测 | 评测集 **56 条三库全覆盖**（星铁 32 / 绝区零 12 / 原神 12）；实验 A/B/C/D/E/F 均已出真实数据（F 另立 8 条溯源题集，不进主评测集） |
 | 检索实验覆盖 | **A / B / D 均已扩到三库**（sr 29 / ys 9 / zzz 10 = 48 条有 gold 的题），汇总按库分节、逐库配对检验，不混口径 |
 | 已知偏差 | 无。`eval_cases` 表已是 **56 条**（sr 32 / ys 12 / zzz 12），与代码里的评测集逐条一致（2026-10 实查） |
-| 工程 | pytest **838 项**全绿（含故障注入 23 + 引用校验 43 + 接线守卫 15 + 产物可观测 8）；smoke 自检 41 项；ruff 全仓清；前端 vitest **68 项**；GitHub Actions 跑 pytest + ruff + 冒烟自检 + 前端测试与构建 + 密钥卫生 |
+| 工程 | pytest **844 项**全绿（含故障注入 23 + 引用校验 43 + 接线守卫 15 + 产物可观测 8）；smoke 自检 41 项；ruff 全仓清；前端 vitest **71 项**；GitHub Actions 跑 pytest + ruff + 冒烟自检 + 前端测试与构建 + 密钥卫生 |
 
 一条命令自检：
 

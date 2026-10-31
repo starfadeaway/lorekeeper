@@ -1,12 +1,27 @@
 import { useEffect, useRef, useState } from 'react'
-import { FALLBACK_GAMES, postDeliverable } from '../api'
+import { FALLBACK_GAMES, postDeliverableApprove, postDeliverablePlan } from '../api'
 import { download, fileStem } from '../exportMd'
 import type {
   DeliverableConflict,
+  DeliverablePlanDraft,
+  DeliverablePlanItem,
   DeliverableResponse,
   DeliverableSection,
   Health,
 } from '../types'
+
+/**
+ * 审批勾选 → 实际执行的计划。
+ *
+ * 默认全选（`chosen` 里没有的 key 视为选中）：用户只取消不想跑的，
+ * 不需要逐条勾一遍。空计划由 UI 挡在按钮上，服务端也会再校验一次。
+ */
+export function pickPlan(
+  plan: DeliverablePlanItem[],
+  chosen: Record<string, boolean>,
+): DeliverablePlanItem[] {
+  return plan.filter((p) => chosen[p.name] !== false)
+}
 
 interface Props {
   health: Health | null
@@ -159,27 +174,59 @@ export function DeliverablePanel({ health }: Props) {
   const [busy, setBusy] = useState(false)
   const [elapsed, setElapsed] = useState(0)
   const [res, setRes] = useState<DeliverableResponse | null>(null)
+  const [draft, setDraft] = useState<DeliverablePlanDraft | null>(null)
+  const [chosen, setChosen] = useState<Record<string, boolean>>({})
   const [err, setErr] = useState<string | null>(null)
   const [view, setView] = useState<'structured' | 'markdown'>('structured')
   const timer = useRef<number | null>(null)
 
   useEffect(() => () => { if (timer.current) window.clearInterval(timer.current) }, [])
 
+  const stopTimer = () => {
+    if (timer.current) window.clearInterval(timer.current)
+    timer.current = null
+  }
+
+  /** 第一步：只出计划（一次规划调用，不检索）。 */
   const run = async () => {
     if (busy || question.trim().length < 4) return
     setBusy(true)
     setErr(null)
     setRes(null)
+    setDraft(null)
     setElapsed(0)
-    // 计时器不是为了好看：这条链路实测 30-60s，
-    // 没有进度反馈时用户会以为卡死了，然后去点重试。
     timer.current = window.setInterval(() => setElapsed((e) => e + 1), 1000)
     try {
-      setRes(await postDeliverable({ question: question.trim(), game }))
+      const d = await postDeliverablePlan({ question: question.trim(), game })
+      setDraft(d)
+      setChosen(Object.fromEntries(d.plan.map((p) => [p.name, true])))
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e))
     } finally {
-      if (timer.current) window.clearInterval(timer.current)
+      stopTimer()
+      setBusy(false)
+    }
+  }
+
+  /** 第二步：按勾选后的计划执行。 */
+  const approve = async () => {
+    if (!draft || busy) return
+    const plan = pickPlan(draft.plan, chosen)
+    if (plan.length === 0) {
+      setErr('至少保留一个子任务再批准')
+      return
+    }
+    setBusy(true)
+    setErr(null)
+    setElapsed(0)
+    timer.current = window.setInterval(() => setElapsed((e) => e + 1), 1000)
+    try {
+      setRes(await postDeliverableApprove(draft.run_id, plan))
+      setDraft(null)
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e))
+    } finally {
+      stopTimer()
       setBusy(false)
     }
   }
@@ -221,7 +268,7 @@ export function DeliverablePanel({ health }: Props) {
             ))}
           </div>
           <button className="primary" onClick={run} disabled={busy || question.trim().length < 4}>
-            {busy ? `生成中… ${elapsed}s` : '生成交付物'}
+            {busy ? `处理中… ${elapsed}s` : '生成交付物'}
           </button>
         </div>
         <div className="chips">
@@ -236,12 +283,67 @@ export function DeliverablePanel({ health }: Props) {
 
       {busy && (
         <div className="thinking dv-thinking">
-          <span className="spinner" /> 规划子任务并逐个检索、抽取事实…
-          <span className="muted">已用 {elapsed}s（实测 30–60s，属正常）</span>
+          <span className="spinner" />{' '}
+          {draft ? '按已批准的计划检索、抽取事实…' : '规划子任务…'}
+          <span className="muted">
+            已用 {elapsed}s{draft ? '（执行阶段 30–60s，属正常）' : '（只做一次规划调用）'}
+          </span>
         </div>
       )}
 
       {err && <div className="error">出错了：{err}</div>}
+
+      {draft && !busy && (
+        <div className="dv-plan">
+          <div className="group-title">
+            审批：确认要执行的子任务
+            <span className="muted dv-sub">
+              默认全选；取消勾选可跳过某条。批准后只跑保留项，不会重新规划。
+            </span>
+          </div>
+          <p className="muted">
+            主题：{draft.subject || '未识别'} · run <code>{draft.run_id}</code> · 规划耗时{' '}
+            {draft.elapsed_ms}ms
+          </p>
+          {draft.plan.map((p) => (
+            <label className="dv-plan-item" key={p.name}>
+              <input
+                type="checkbox"
+                checked={chosen[p.name] !== false}
+                onChange={(e) =>
+                  setChosen((c) => ({ ...c, [p.name]: e.target.checked }))
+                }
+              />
+              <span className="dv-plan-body">
+                <b>{p.name}</b>
+                <span className="muted"> {p.goal}</span>
+                <span className="chips">
+                  {p.queries.map((q) => (
+                    <span className="chip" key={q}>
+                      {q}
+                    </span>
+                  ))}
+                </span>
+              </span>
+            </label>
+          ))}
+          <div className="row dv-plan-actions">
+            <span className="muted">
+              将执行 {pickPlan(draft.plan, chosen).length} / {draft.plan.length} 个子任务
+            </span>
+            <button className="ghost mini" onClick={() => setDraft(null)}>
+              取消
+            </button>
+            <button
+              className="primary"
+              onClick={approve}
+              disabled={busy || pickPlan(draft.plan, chosen).length === 0}
+            >
+              批准并执行
+            </button>
+          </div>
+        </div>
+      )}
 
       {res && (
         <div className="dv-result">

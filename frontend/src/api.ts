@@ -1,4 +1,6 @@
 import type {
+  DeliverablePlanDraft,
+  DeliverablePlanItem,
   DeliverableResponse,
   Health,
   RetrieveResponse,
@@ -45,6 +47,20 @@ export const retrieve = (body: {
  */
 export const postDeliverable = (body: { question: string; game: string }) =>
   json<DeliverableResponse>('/deliverable', { method: 'POST', body: JSON.stringify(body) })
+
+/**
+ * 审批流第一步：只出计划、不执行。比 `postDeliverable` 便宜得多
+ * （一次规划调用，不检索不抽取），用户可以改完计划再批准。
+ */
+export const postDeliverablePlan = (body: { question: string; game: string }) =>
+  json<DeliverablePlanDraft>('/deliverable/plan', { method: 'POST', body: JSON.stringify(body) })
+
+/** 审批流第二步：按（可修改的）计划执行；`plan` 省略 = 原计划照跑。 */
+export const postDeliverableApprove = (runId: string, plan?: DeliverablePlanItem[]) =>
+  json<DeliverableResponse>(`/deliverable/${runId}/approve`, {
+    method: 'POST',
+    body: JSON.stringify(plan ? { plan } : {}),
+  })
 
 /**
  * 流式问答。SSE 不能用 fetch + await 直接读，必须手动解析 \n\n 分隔的帧。

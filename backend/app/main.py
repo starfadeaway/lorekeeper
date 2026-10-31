@@ -197,6 +197,17 @@ class DeliverableRequest(BaseModel):
     game: str = Field("sr", description="目标库 slug：sr / ys / zzz")
 
 
+class DeliverableApproveRequest(BaseModel):
+    """审批入参：`plan` 省略 = 原计划照跑；传入则用**改过的计划**执行。
+
+    计划的结构与规划器输出一致：`[{name, goal, queries}]`。
+    服务端会重新校验（1–6 个、名字唯一、每个至少一条 query），
+    不信任前端传来的形状。
+    """
+
+    plan: list[dict] | None = Field(None, description="改过的计划；省略表示批准原计划")
+
+
 class IngestRequest(BaseModel):
     """`/ingest` 入参：抓一个分类下的页面并重建索引。
 
@@ -596,9 +607,50 @@ async def deliverable_resume(run_id: str) -> dict:
     return _deliverable_payload(res)
 
 
+@api_router.post("/deliverable/plan")
+async def deliverable_plan(req: DeliverableRequest) -> dict:
+    """审批流程第一步：只出计划、不执行。
+
+    返回 `run_id` + 计划（`[{name, goal, queries}]`）+ subject。
+    调用方可以原样批准，也可以改计划再 `POST /deliverable/{run_id}/approve`。
+    只花一次规划调用，不检索、不抽取 —— 这是 HITL 的成本优势。
+    """
+    agent = DeliverableAgent(settings=_settings)
+    res = await agent.plan_draft(req.question, game=req.game)
+    return {
+        "run_id": res.run_id,
+        "topic": res.topic,
+        "subject": res.subject,
+        "plan": res.plan,
+        "elapsed_ms": res.elapsed_ms,
+    }
+
+
+@api_router.post("/deliverable/{run_id}/approve")
+async def deliverable_approve(run_id: str, req: DeliverableApproveRequest) -> dict:
+    """审批流程第二步：按（可修改的）计划执行。
+
+    - `plan` 省略 → 用草稿里的原计划；
+    - `plan` 传入 → 用改过的计划，服务端重新校验（1–6 个、名字唯一、每条至少一个 query）；
+    - 返回结构与 `/deliverable` 一致，前端不用写第二套渲染。
+    """
+    agent = DeliverableAgent(settings=_settings)
+    try:
+        res = await agent.approve(run_id, plan=req.plan)
+    except KeyError as exc:
+        raise HTTPException(
+            status_code=404, detail=f"没有 run_id={run_id} 的交付物草稿"
+        ) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return _deliverable_payload(res)
+
+
 @api_router.get("/deliverable/{run_id}")
 async def deliverable_status(run_id: str) -> dict:
-    """查快照进度：哪些子任务已完成、还差哪些。续跑前先问一次。"""
+    """查快照进度：哪些子任务已完成、还差哪些；审批草稿的 phase 是 awaiting_approval。"""
     store = FileSnapshotStore(_settings.data_root_abs / "runs" / "deliverable")
     try:
         ckpt = await store.load(run_id)
