@@ -124,7 +124,7 @@ chat 的需求是：**低延迟、精确停机、事件按固定顺序外发**�
 
 - deliverable 从"一次调用跑几十秒的同步接口"变成"可暂停、可恢复、可并行的工作流"，这是能现场演示的东西；
 - 面试可讲的不再是"我评估过框架"，而是"我在需要状态与恢复的那一层用了框架，其余层没用，理由是 X"；
-- 新增 **chat** 的 HTTP 端到端测试（`TestClient` / ASGI），补齐现有 864 项测试里「chat 没有一条真发 HTTP」的空白；交付物端点已有 **8 条 ASGI 测试**（`backend/tests/test_deliverable_http.py`）。
+- ⚠️ **chat 端点的 HTTP 端到端测试至今一条都没有** —— 交付物端点已有 **8 条 ASGI 测试**（`backend/tests/test_deliverable_http.py`），但 `/api/chat` 与 `/api/chat/stream` 仍无 HTTP 层验证（见 §8「测试」行）。这是本轮**未结账**的一项，别写成已补齐。
 
 **负向**
 
@@ -144,7 +144,7 @@ chat 的需求是：**低延迟、精确停机、事件按固定顺序外发**�
 
 | 模块 | 动作 | 理由 |
 |---|---|---|
-| `app/agent/react.py` | **冻结** | 生产 chat 路径 + 848 测试的重心；任何行为变更都会污染 A–F |
+| `app/agent/react.py` | **冻结** | 生产 chat 路径 + 864 测试的重心；任何行为变更都会污染 A–F |
 | `app/agent/deliverable.py` | 保留全部纯函数与 dataclass；`run()` 拆成节点可调用的方法 | 纯函数是这次迁移唯一稳定的地基 |
 | `app/agent/workflow.py` | **新增**：状态图、节点、Send、checkpoint、事件映射 | 不侵入现有模块 |
 | `app/agent/workflow.py` 的 fan-out | 新增**子任务级**并发闸门 + `max_concurrency` 配置 | 现有 `_semaphore` 只挡入口请求，不限制图内并行度 |
@@ -239,7 +239,7 @@ class WorkflowState(TypedDict, total=False):
 | 成本可解释 | token 变化必须实测：n=18 实测 **+0.5%**（**prompt+completion 合计** 330,389 → 332,119；拆开看 prompt **+0.86%**、completion **−2.39%**；单轮在 +4.6% ~ −4.7% 之间波动，属噪声）。⚠️ 合成一个「token」会盖住机制信号：涨的是 **prompt** token（并发下 KV cache 命中下降），这正是本行要盯的那一项；并发度上调后再看 KV cache 是否退化 | 同批任务三轮合计 usage |
 | 断点续跑 | 杀掉进程后 resume 能完成，且已完成的子任务调用次数为 0 | 计数断言（FakeLLM / 打点） |
 | chat 未受影响 | `/api/chat` 与 `/api/chat/stream` 的事件结构与答案不变；`main.py` 不 import 新模块 | 源码断言 + 现有 864 项测试 |
-| 测试 | 新增 ≥ 25 项：图结构、并行、interrupt/resume、快照序列化、HTTP 端到端 | ✅ 新增 **49** 项，含 **HTTP 端到端 8 条**（`backend/tests/test_deliverable_http.py`，真实 ASGI 路由/SSE 帧；不含 lifespan 预热） |
+| 测试 | 新增 ≥ 25 项：图结构、并行、interrupt/resume、快照序列化、HTTP 端到端 | ✅ 相关测试文件累计 **55** 条（`test_react_langgraph.py` 9 / `test_deliverable_orchestration.py` 17 / `test_deliverable_resume.py` 6 / `test_deliverable_approval.py` 7 / `test_deliverable_http.py` 8 / `test_exp_g_tool_seq.py` 8），其中 **HTTP 端到端 8 条**（`test_deliverable_http.py`，真实 ASGI 路由/SSE 帧；不含 lifespan 预热）、**本轮新增 16 条** |
 | 静态检查 | `ruff check .` 全绿 | CI |
 
 **明确不做**：不为了让数字好看而重跑 A–F；不把 deliverable 接进 chat 的评测口径。
@@ -294,7 +294,7 @@ class WorkflowState(TypedDict, total=False):
 | **P0** | 补 deliverable 编排层行为基线：FakeLLM 驱动，钉住「规划 → 子任务 → 合并 → 冲突 → 渲染」的现有产出 | 0.5–1 天 | 无 —— 迁不迁都要做；没有它，"恢复"只是重跑、"审批"没有可断言的状态、"可观测"没有事件顺序 |
 | **P1** ✅ | 并行实测（6 题 × 3 轮 ABBA，n=18）+ 三个缺口的代码级成本探针 | 已完成（约 1 天） | 逐题配对比值中位数 0.532（−46.8%）、token +0.5%、36 次 0 error；定价表见 §12 |
 | **P1b** ✅ | A/A 同实现重跑（sr 15 条 × 2 遍），量出评测链路噪声底 | 已完成（0.5 天） | 检索侧 0（同 query 两次结果逐字相同）；逐字 0/15、归一化后仍 0/15；步数 **12/15**、工具序列 **10/15**；真实分叉 model **27** / tool **12**（另有 **36** 个纯计时站点被归一化吃掉，不算行为分叉）；Judge 噪声 **0.357**（判定成功的 7 对；8 对因 Judge 超时不可比，已剔除并单列）——见 §8 的口径警告 |
-| **G** ✅ | 正式对照：手写 `while` 循环 vs LangGraph `StateGraph`（sr 15 条、ABBA 平衡顺序、预热 1 条、强制串行），按 §8 行为层口径**逐条结账**；另跑一次独立复跑 v2 补记工具序列 | 已完成（2026-10-31） | 主运行：judge Δ=**+0.077**（p=0.317、d=0.28）、步数 / 循环耗时 / token 的 p 全 > 0.3 → **均无可测差异**；步数 **12/15**（= 基线）。复跑 v2：judge Δ=**−0.231**（p=0.140、d=−0.41，｜Δ｜< 0.357）、步数 **12/15** → 结论稳定（符号翻转本身即噪声表现）。工具序列：**9/15**（v2，`exp_G_tool_seq.json`）**< A/A 基线 10/15 → 该项未达标（差 1 题）**；1 题差在二项噪声内，但按预注册口径照实记为未达标。产物 `exp_G_sr15.json`（入库 `68512ef`）+ `exp_G_sr15_v2.json` + `exp_G_tool_seq.json`，逐条见 `docs/framework_comparison.md`「验收逐条结账」 |
+| **G** ✅ | 正式对照：手写 `while` 循环 vs LangGraph `StateGraph`（sr 15 条、ABBA 平衡顺序、预热 1 条、强制串行），按 §8 行为层口径**逐条结账**；另跑一次独立复跑 v2 补记工具序列 | 已完成（2026-10-31） | 主运行：judge Δ=**+0.077**（p=0.317、d=0.28）、步数 / 循环耗时 / token 的 p 全 > 0.3 → **均无可测差异**；步数 **12/15**（= 基线）。复跑 v2：judge Δ=**−0.231**（p=0.140、d=−0.41，有效配对 **n=13**，｜Δ｜< 0.357）、步数 **12/15** → 结论稳定（符号翻转本身即噪声表现）。工具序列：**9/15**（v2，`exp_G_tool_seq.json`）**< A/A 基线 10/15 → 该项未达标（差 1 题）**；1 题差在二项噪声内，但按预注册口径照实记为未达标。产物 `exp_G_sr15.json`（入库 `68512ef`）+ `exp_G_sr15_v2.json` + `exp_G_tool_seq.json`，逐条见 `docs/framework_comparison.md`「验收逐条结账」 |
 | **P2** | 只有定价表显示"手写总成本 ≥ 5 天、且需要图级可观测或社区维护"时才执行；范围按探针裁剪 | 8–10 天 | 验收见 §8 |
 
 **P1 测的是"并行值不值"，不是"框架值不值"。** 如果并行拿不到收益，瓶颈就在远程调用本身，框架同样拿不到 —— 那时迁移只能由"恢复 / 审批 / 可观测"来付账，与速度无关。

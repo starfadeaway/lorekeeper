@@ -35,9 +35,7 @@
 | **LlamaIndex** | retrieval-first：ingestion / indexing / query engine / hybrid search / reranking 开箱即用 | RAG 数据管道与检索质量 | 本项目的 ingestion 是**针对中文游戏 wiki 特写**的模板展平，通用抽象套不上；而它的 hybrid search + reranking（BM25 ∥ 向量 → RRF → Cross-Encoder）**本项目已经自己实现了** |
 
 > 依据：LangGraph 官方 README（1.2.18，2026-10-26）自述
-> "We recommend you use LangGraph when you have advanced needs that require
-> a combination of deterministic and agentic workflows, **heavy customization**,
-> and **carefully controlled latency**"；
+> "We recommend you use LangGraph when you have advanced needs that require a combination of deterministic and agentic workflows, **heavy customization**, and **carefully controlled latency**"；
 > 而 "durable execution, persistence, human-in-the-loop" 是它提供的基础设施。
 >
 > LlamaIndex 与 LangChain 的官方对比口径为
@@ -181,7 +179,7 @@ query 措辞与实时抓取结果都会引入分叉（2026-10-30 的 A/A 实测�
 
 | ADR §8 要求 | 实测 | 结论 |
 |---|---|---|
-| 归一化后等价（逐字） | 剥耗时与随机 tool_call id 后，两版仍 **0/15** 逐字相同 | ⚠️ **逐字等价在真实 API 下不可达** —— 同实现重跑也是 0/15（A/A）。所以这一项**只能按「不劣于同实现基线」解读，不能字面判通过**。实测未见劣于基线：步数 12/15 = 基线、judge Δ 远低于噪声底 |
+| 归一化后等价（逐字） | **G 侧未测** —— `exp_G_sr15.json` 未记录消息链，事后补不出来；同实现重跑也只 **0/15** 逐字相同（A/A） | ⚠️ **逐字等价在真实 API 下不可达** —— 同实现重跑也是 0/15（A/A）。所以这一项**只能按「不劣于同实现基线」解读，不能字面判通过**。实测未见劣于基线：步数 12/15 = 基线、judge Δ 远低于噪声底 |
 | 步数相同率 ≥ A/A 基线（12/15） | **12/15**（主运行，分叉在 sr-007 / sr-013 / sr-009） | ✅ **正好达标**，不低于基线 |
 | 工具序列相同率 ≥ A/A 基线（10/15） | **9/15**（复跑 v2，`exp_G_tool_seq.json`；不同：sr-007 / sr-008 / sr-009 / sr-011 / sr-031 / sr-032） | ❌ **未达标（差 1 题）** —— 9 < 10。1 题差在二项噪声内，但按**预注册口径照实记未达标**，不改成"通过" |
 | 答案 judge 差值 > 噪声底（0.357） | Δ = **+0.077**（主运行） | ✅ 远低于噪声底 |
