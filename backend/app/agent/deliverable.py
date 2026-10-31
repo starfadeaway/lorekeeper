@@ -859,9 +859,23 @@ class DeliverableAgent:
         return st
 
     # ---------------- 主流程 ---------------- #
+    async def _emit(self, on_event, event: str, data: dict) -> None:  # noqa: ANN001
+        """向事件回调发一条事件；回调失败只记日志，不打断执行。
+
+        事件是**观测**，不是控制流：SSE 客户端断线时回调会抛，
+        那时任务本身已经跑了一半，让上传失败把整条链带崩是反向的取舍。
+        """
+        if on_event is None:
+            return
+        try:
+            await on_event({"event": event, "data": data})
+        except Exception:  # noqa: BLE001
+            logger.exception("交付物事件回调失败：%s", event)
+
     async def _execute_plan(
         self, plan: list[dict], ctx: ToolContext, subject: str,
         *, done: dict[str, SubtaskResult] | None = None, on_done=None,
+        on_start=None,
     ) -> list[SubtaskResult]:
         """跑完一整份计划，返回**与 plan 同序**的子任务结果。
 
@@ -874,14 +888,17 @@ class DeliverableAgent:
         否则两次运行之间段落顺序都会漂移，而且不报错。
 
         `done` 是断点续跑带回来的"已完成子任务"（按名字匹配）：命中的直接复用，
-        不调用模型；`on_done` 在每个新完成的子任务后回调（用于落快照）。
+        不调用模型；`on_done` 在每个新完成的子任务后回调（用于落快照/发事件），
+        `on_start` 在真正执行前回调（用于 SSE 进度）。
         """
         done = done or {}
         out: list[SubtaskResult] = []
-        for spec in plan:
+        for idx, spec in enumerate(plan, 1):
             name = str(spec.get("name", ""))
             st = done.get(name)
             if st is None:
+                if on_start is not None:
+                    await on_start(idx, spec)
                 st = await self._run_subtask(spec, ctx, subject)
                 if on_done is not None:
                     await on_done(st)
@@ -890,7 +907,7 @@ class DeliverableAgent:
 
     async def run(
         self, question: str, *, game: str | None = None,
-        run_id: str | None = None, resume: bool = False,
+        run_id: str | None = None, resume: bool = False, on_event=None,
     ) -> DeliverableResult:
         """跑一次交付物任务；`resume=True` 时从 `run_id` 的快照续跑。
 
@@ -899,6 +916,9 @@ class DeliverableAgent:
         - **已完成子任务不重跑**：按子任务名匹配，结果直接复用；
         - 产物与"一次性跑完"逐字一致（除时间戳 / run_id）；
         - 快照在每个子任务完成后落一次，崩溃最多丢当前那一个子任务。
+
+        `on_event` 是可选的异步回调，按 `plan → subtask_start → subtask_end → …`
+        的顺序发事件；它是纯观测通道，回调失败不会影响执行（见 `_emit`）。
         """
         t0 = time.perf_counter()
         if resume:
@@ -937,12 +957,26 @@ class DeliverableAgent:
         # 否则第二次崩溃会把上一次的进度覆盖成"只剩新跑的那几条"。
         completed: list[SubtaskResult] = list(done.values())
 
+        await self._emit(on_event, "plan", {
+            "topic": res.topic, "subject": subject,
+            "plan": plan, "reused": sorted(done),
+        })
+
+        async def on_start(idx: int, spec: dict) -> None:
+            await self._emit(on_event, "subtask_start", {
+                "name": str(spec.get("name", "")), "index": idx, "total": len(plan),
+            })
+
         async def on_done(st: SubtaskResult) -> None:
             completed.append(st)
+            await self._emit(on_event, "subtask_end", {
+                "name": st.name, "status": st.status,
+                "facts": len(st.facts), "ms": st.latency_ms,
+            })
             await self._checkpoint(res, plan, subject, completed, "running")
 
         res.subtasks = await self._execute_plan(
-            plan, ctx, subject, done=done, on_done=on_done
+            plan, ctx, subject, done=done, on_done=on_done, on_start=on_start
         )
         self._finalize(res, t0, subject)
         await self._checkpoint(res, plan, subject, res.subtasks, "done")
@@ -970,7 +1004,7 @@ class DeliverableAgent:
         return res
 
     async def approve(
-        self, run_id: str, plan: list[dict] | None = None
+        self, run_id: str, plan: list[dict] | None = None, *, on_event=None,
     ) -> DeliverableResult:
         """批准草稿：`plan=None` 用原计划；传 plan 则用**改过的计划**执行。
 
@@ -979,6 +1013,8 @@ class DeliverableAgent:
           已 `done` 的直接拒绝 —— 避免"审批"变成第二次重跑；
         - 计划会被校验（1–6 个、名字唯一、每个都有 goal 与至少一条 query）；
         - 已完成的子任务按名字复用（崩溃后重新审批不会重复花钱）。
+
+        `on_event` 同 `run`：`plan → subtask_start → subtask_end → …`。
         """
         t0 = time.perf_counter()
         ckpt = await self.store.load(run_id)
@@ -1000,13 +1036,27 @@ class DeliverableAgent:
         }
         completed: list[SubtaskResult] = list(done.values())
 
+        await self._emit(on_event, "plan", {
+            "topic": res.topic, "subject": ckpt.subject,
+            "plan": approved, "reused": sorted(done),
+        })
+
+        async def on_start(idx: int, spec: dict) -> None:
+            await self._emit(on_event, "subtask_start", {
+                "name": str(spec.get("name", "")), "index": idx, "total": len(approved),
+            })
+
         async def on_done(st: SubtaskResult) -> None:
             completed.append(st)
+            await self._emit(on_event, "subtask_end", {
+                "name": st.name, "status": st.status,
+                "facts": len(st.facts), "ms": st.latency_ms,
+            })
             await self._checkpoint(res, approved, ckpt.subject, completed, "running")
 
         await self._checkpoint(res, approved, ckpt.subject, completed, "running")
         res.subtasks = await self._execute_plan(
-            approved, ctx, ckpt.subject, done=done, on_done=on_done
+            approved, ctx, ckpt.subject, done=done, on_done=on_done, on_start=on_start
         )
         self._finalize(res, t0, ckpt.subject)
         await self._checkpoint(res, approved, ckpt.subject, res.subtasks, "done")
@@ -1148,6 +1198,7 @@ class ParallelDeliverableAgent(DeliverableAgent):
     async def _execute_plan(
         self, plan: list[dict], ctx: ToolContext, subject: str,
         *, done: dict[str, SubtaskResult] | None = None, on_done=None,
+        on_start=None,
     ) -> list[SubtaskResult]:
         """并行跑**尚未完成**的子任务；已完成的直接复用，结果仍按 plan 排序。
 
@@ -1157,15 +1208,23 @@ class ParallelDeliverableAgent(DeliverableAgent):
         ADR-001 §7.5 的已知限制里。
         """
         done = done or {}
-        pending = [spec for spec in plan if str(spec.get("name", "")) not in done]
+        pending_idx = [
+            (i, spec) for i, spec in enumerate(plan, 1)
+            if str(spec.get("name", "")) not in done
+        ]
         sem = asyncio.Semaphore(self.parallel_limit)
 
-        async def one(spec: dict) -> SubtaskResult:
+        async def one(idx: int, spec: dict) -> SubtaskResult:
             async with sem:
+                if on_start is not None:
+                    await on_start(idx, spec)
                 return await self._run_subtask(spec, ctx, subject)
 
-        results = await asyncio.gather(*(one(spec) for spec in pending))
-        fresh = {str(spec.get("name", "")): st for spec, st in zip(pending, results, strict=False)}
+        results = await asyncio.gather(*(one(idx, spec) for idx, spec in pending_idx))
+        fresh = {
+            str(spec.get("name", "")): st
+            for (_idx, spec), st in zip(pending_idx, results, strict=False)
+        }
 
         if on_done is not None:
             for spec in plan:

@@ -1,6 +1,7 @@
 import type {
   DeliverablePlanDraft,
   DeliverablePlanItem,
+  DeliverableProgressEvent,
   DeliverableResponse,
   Health,
   RetrieveResponse,
@@ -61,6 +62,62 @@ export const postDeliverableApprove = (runId: string, plan?: DeliverablePlanItem
     method: 'POST',
     body: JSON.stringify(plan ? { plan } : {}),
   })
+
+/**
+ * 审批执行的**流式**版本：边跑边回调 `plan / subtask_start / subtask_end`，
+ * 返回最终的完整结果（与 `postDeliverableApprove` 同形）。
+ *
+ * SSE 帧解析与 `streamChat` 同一套：`\n\n` 分帧，UTF-8 分片必须 `{stream:true}`。
+ */
+export async function streamDeliverableApprove(
+  runId: string,
+  plan: DeliverablePlanItem[],
+  onEvent: (ev: DeliverableProgressEvent) => void,
+): Promise<DeliverableResponse> {
+  const res = await fetch(`${BASE}/deliverable/${runId}/approve/stream`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ plan }),
+  })
+  if (!res.ok || !res.body) throw new Error(`SSE 连接失败: ${res.status}`)
+
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder('utf-8')
+  let buffer = ''
+  let result: DeliverableResponse | null = null
+
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buffer += decoder.decode(value, { stream: true })
+
+    let idx: number
+    while ((idx = buffer.indexOf('\n\n')) >= 0) {
+      const frame = buffer.slice(0, idx)
+      buffer = buffer.slice(idx + 2)
+      const evLine = frame.split('\n').find((l) => l.startsWith('event: '))
+      const dataLine = frame.split('\n').find((l) => l.startsWith('data: '))
+      if (!evLine || !dataLine) continue
+      let ev: { event: string; data: unknown }
+      try {
+        ev = { event: evLine.slice(7).trim(), data: JSON.parse(dataLine.slice(6)) }
+      } catch {
+        continue
+      }
+      if (ev.event === 'error') {
+        throw new Error((ev.data as { message?: string }).message ?? '流式执行失败')
+      }
+      if (ev.event === 'result') {
+        result = ev.data as DeliverableResponse
+        continue
+      }
+      onEvent(ev as DeliverableProgressEvent)
+    }
+  }
+
+  if (!result) throw new Error('流结束但没有收到 result 事件')
+  return result
+}
 
 /**
  * 流式问答。SSE 不能用 fetch + await 直接读，必须手动解析 \n\n 分隔的帧。

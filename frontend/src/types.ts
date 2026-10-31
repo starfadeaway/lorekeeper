@@ -259,3 +259,15 @@ export interface DeliverablePlanDraft {
   plan: DeliverablePlanItem[]
   elapsed_ms: number
 }
+
+/** 交付物执行过程中的 SSE 事件（result 由 stream 函数单独返回）。 */
+export type DeliverableProgressEvent =
+  | {
+      event: 'plan'
+      data: { topic: string; subject: string; plan: DeliverablePlanItem[]; reused: string[] }
+    }
+  | { event: 'subtask_start'; data: { name: string; index: number; total: number } }
+  | {
+      event: 'subtask_end'
+      data: { name: string; status: string; facts: number; ms: number }
+    }

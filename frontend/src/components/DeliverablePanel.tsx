@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { FALLBACK_GAMES, postDeliverableApprove, postDeliverablePlan } from '../api'
+import { FALLBACK_GAMES, postDeliverablePlan, streamDeliverableApprove } from '../api'
 import { download, fileStem } from '../exportMd'
 import type {
   DeliverableConflict,
@@ -176,6 +176,10 @@ export function DeliverablePanel({ health }: Props) {
   const [res, setRes] = useState<DeliverableResponse | null>(null)
   const [draft, setDraft] = useState<DeliverablePlanDraft | null>(null)
   const [chosen, setChosen] = useState<Record<string, boolean>>({})
+  /** 审批执行期间每个子任务的实时状态（来自 SSE） */
+  const [progress, setProgress] = useState<
+    Record<string, { status: string; facts?: number; ms?: number }>
+  >({})
   const [err, setErr] = useState<string | null>(null)
   const [view, setView] = useState<'structured' | 'markdown'>('structured')
   const timer = useRef<number | null>(null)
@@ -208,7 +212,7 @@ export function DeliverablePanel({ health }: Props) {
     }
   }
 
-  /** 第二步：按勾选后的计划执行。 */
+  /** 第二步：按勾选后的计划执行，用 SSE 实时更新每个子任务的状态。 */
   const approve = async () => {
     if (!draft || busy) return
     const plan = pickPlan(draft.plan, chosen)
@@ -219,9 +223,20 @@ export function DeliverablePanel({ health }: Props) {
     setBusy(true)
     setErr(null)
     setElapsed(0)
+    setProgress(Object.fromEntries(plan.map((p) => [p.name, { status: 'pending' }])))
     timer.current = window.setInterval(() => setElapsed((e) => e + 1), 1000)
     try {
-      setRes(await postDeliverableApprove(draft.run_id, plan))
+      const r = await streamDeliverableApprove(draft.run_id, plan, (ev) => {
+        if (ev.event === 'subtask_start') {
+          setProgress((prev) => ({ ...prev, [ev.data.name]: { status: 'running' } }))
+        } else if (ev.event === 'subtask_end') {
+          setProgress((prev) => ({
+            ...prev,
+            [ev.data.name]: { status: ev.data.status, facts: ev.data.facts, ms: ev.data.ms },
+          }))
+        }
+      })
+      setRes(r)
       setDraft(null)
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e))
@@ -288,6 +303,33 @@ export function DeliverablePanel({ health }: Props) {
           <span className="muted">
             已用 {elapsed}s{draft ? '（执行阶段 30–60s，属正常）' : '（只做一次规划调用）'}
           </span>
+        </div>
+      )}
+
+      {draft && busy && Object.keys(progress).length > 0 && (
+        <div className="dv-progress">
+          {draft.plan
+            .filter((p) => progress[p.name])
+            .map((p) => {
+              const st = progress[p.name]
+              const label =
+                st.status === 'pending' ? '等待'
+                : st.status === 'running' ? '执行中…'
+                : st.status === 'ok' ? `完成 · ${st.facts ?? 0} 条事实`
+                : st.status === 'empty' ? '无可用事实'
+                : st.status === 'truncated' ? '输出截断'
+                : '失败'
+              return (
+                <div className="dv-prog-item" data-state={st.status} key={p.name}>
+                  <span className="dv-prog-dot" />
+                  <span className="dv-prog-name">{p.name}</span>
+                  <span className="muted dv-prog-meta">
+                    {label}
+                    {st.ms != null ? ` · ${st.ms}ms` : ''}
+                  </span>
+                </div>
+              )
+            })}
         </div>
       )}
 

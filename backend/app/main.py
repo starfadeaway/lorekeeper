@@ -8,6 +8,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, FastAPI, HTTPException
@@ -605,6 +606,76 @@ async def deliverable_resume(run_id: str) -> dict:
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return _deliverable_payload(res)
+
+
+def _sse(event: str, data: dict) -> str:
+    return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+
+async def _deliverable_sse(run) -> AsyncIterator[str]:  # noqa: ANN001 - 异步生成器
+    """把 agent 的 `on_event` 回调桥接成 SSE，最后补一条 `result`。
+
+    事件只是观测：客户端断线时 `queue.put` 不会抛（无界队列），
+    agent 继续跑完并落快照，用户重连后可用 `/deliverable/{run_id}` 或 resume 接着来。
+    """
+    queue: asyncio.Queue = asyncio.Queue()
+
+    async def on_event(ev: dict) -> None:
+        await queue.put(ev)
+
+    task = asyncio.create_task(run(on_event))
+    try:
+        while True:
+            if task.done() and queue.empty():
+                break
+            try:
+                ev = await asyncio.wait_for(queue.get(), timeout=0.1)
+            except TimeoutError:
+                continue
+            yield _sse(ev["event"], ev["data"])
+        res = await task
+        yield _sse("result", _deliverable_payload(res))
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("交付物流式执行失败")
+        yield _sse("error", {"message": str(exc)})
+
+
+@api_router.post("/deliverable/stream")
+async def deliverable_stream(req: DeliverableRequest) -> StreamingResponse:
+    """一次性交付物的流式版本：边跑边发 `plan / subtask_start / subtask_end`。
+
+    与 `/deliverable` 的产物完全一致（最后一条 `result` 就是它的返回体），
+    区别只是能看到进度 —— 这条链路 30–60s，没有进度就是黑箱。
+    """
+    agent = DeliverableAgent(settings=_settings)
+
+    async def run(on_event):  # noqa: ANN001
+        return await agent.run(req.question, game=req.game, on_event=on_event)
+
+    return StreamingResponse(
+        _deliverable_sse(run), media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+@api_router.post("/deliverable/{run_id}/approve/stream")
+async def deliverable_approve_stream(
+    run_id: str, req: DeliverableApproveRequest,
+) -> StreamingResponse:
+    """审批执行的流式版本：事件同 `/deliverable/stream`，最后一条 `result`。
+
+    ⚠️ 404/409/400 会在流建立后以 `event: error` 下发 —— 这是 SSE 的固有限制：
+    headers 一旦发出就没法改状态码。调用方看 `error` 事件的 message 即可。
+    """
+    agent = DeliverableAgent(settings=_settings)
+
+    async def run(on_event):  # noqa: ANN001
+        return await agent.approve(run_id, plan=req.plan, on_event=on_event)
+
+    return StreamingResponse(
+        _deliverable_sse(run), media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @api_router.post("/deliverable/plan")

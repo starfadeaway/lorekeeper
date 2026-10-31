@@ -1206,6 +1206,49 @@ button.mini {
   font-size: 12px;
 }
 
+/* 执行进度：每个子任务一行，状态点与颜色和工具时间线保持一致 */
+.dv-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 6px 0 10px;
+  padding-left: 2px;
+}
+.dv-prog-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.dv-prog-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex: 0 0 auto;
+}
+.dv-prog-item[data-state='running'] .dv-prog-dot {
+  background: var(--warn);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+.dv-prog-item[data-state='ok'] .dv-prog-dot {
+  background: var(--ok);
+}
+.dv-prog-item[data-state='empty'] .dv-prog-dot,
+.dv-prog-item[data-state='truncated'] .dv-prog-dot {
+  background: var(--warn);
+}
+.dv-prog-item[data-state='error'] .dv-prog-dot {
+  background: var(--bad);
+}
+.dv-prog-name {
+  color: var(--text);
+}
+.dv-prog-meta {
+  margin-left: auto;
+  font-family: var(--mono);
+}
+
 .dv-result {
   margin-top: 14px;
 }
