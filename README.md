@@ -380,6 +380,7 @@ Percona 虽然下放了但不是官方能力，面试时解释"为什么不用�
 | D | Embedding | ✅ 已完成。`bge-m3` vs `Qwen/Qwen3-Embedding-0.6B`（关重排+双侧归一化+独立库） |
 | E | Chat 模型 | ✅ 已完成。DeepSeek vs MiniMax，**三库逐库**（15/12/12 条） |
 | F | 披露层 | ✅ 已完成。页面修订时间开/关消融（n=8 溯源题） |
+| G | Agent 循环实现 | ✅ 已完成。手写 while vs LangGraph `StateGraph`（sr 15 条，配对 n=13）：judge / 步数 / 延迟 / token 均无可测差异（p 全 > 0.3），judge Δ=0.077 < A/A 噪声底 0.357 → **不迁**（[framework_comparison.md](docs/framework_comparison.md)） |
 
 运行：
 
@@ -532,6 +533,7 @@ cd lorekeeper\backend
 | 数据时效 | 版本更新：实测 wiki `recentchanges` 可穿过 WAF。⚠️ **两个口径别混**：落盘产物 `delta_sync_sr_7d.json` 是 **148/706 页（20.9%）、13 次请求**（`lower_bound: true`，窗口被 WAF 截断在 1003 页）；正文另记了一次翻完全部 2922 条的运行，得 **162 页 / 15 次请求**，但**那一跑没有落盘产物**。全量重抓要 71 次。⚠️ 全站口径 1157 页会得出"增量无意义"的**相反结论**。内容指纹已落库（1401 页 + 10843 chunk 100% 覆盖）；「归一化把格式误判从 100% 压到 0」是**探针按构造必然如此**（比原始字节则任何重格式化都算不同），别当战果讲（`docs/delta_sync.md`） |
 | Agent | 手搓 ReAct，工具注册表 4 个（`search_kb` / `get_page` / `calculator` / `list_games`），**生产默认只挂 `search_kb`**（`AGENT_TOOLS`，侧栏显示的就是实际生效的那份） + 4 道安全阀 + 熔断；不可答问题从 7 步/30317 token 降到 4 步/6514 token |
 | 交付物 | 规划 → 子任务 → 合并 → 冲突 → 渲染；并行执行（手写 `asyncio.gather`，**保序**）实测 n=18：墙钟 **−46%**（逐题配对中位数 0.537）、token +0.5%、36 次 0 error；**未迁 LangGraph**，理由与定价见 [ADR-001](docs/adr_001_orchestration.md) |
+| 框架对照 | 实验 G（sr 15 条，HAND vs LangGraph）：judge / 步数 / 延迟 / token **均无可测差异**（p 全 > 0.3，n=13 有效配对）；judge Δ=0.077 小于 A/A 噪声底 0.357 → **不迁**（[framework_comparison.md](docs/framework_comparison.md)） |
 | 多库路由 | 三态（库内/越界/未提及）；越界走无工具单轮，实测 0 步 / 1.1s，库内 3–5 步 / 5–8s |
 | MCP | 4 个工具以标准 MCP（SDK 2.3.0）暴露给外部 host，stdio 传输；**适配层与内置实现输出逐字符一致由守卫实跑保证**（16 项，真 `mcp.Client` 连真 server）。MCP 是**独立 server 入口**，本项目 Agent 始终走进程内直调，**两者之间没有运行时开关**（曾经有过 `TOOL_TRANSPORT`，核实发现无任何代码分支读它，已删），见 [docs/mcp.md](docs/mcp.md) |
 | 后端 | FastAPI，`/api/health` `/api/retrieve` `/api/chat` `/api/chat/stream` `/api/runs` `/api/runs/{run_id}` `/api/deliverable` `/api/ingest` `/api/stats` |
