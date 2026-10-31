@@ -957,6 +957,8 @@ class DeliverableAgent:
         # 否则第二次崩溃会把上一次的进度覆盖成"只剩新跑的那几条"。
         completed: list[SubtaskResult] = list(done.values())
 
+        # 先发计划事件：前端拿到 plan 就能立刻渲染骨架，不用等第一个子任务跑完；
+        # `reused` 让调用方知道哪些是快照里复用、不会再有 start/end 事件的。
         await self._emit(on_event, "plan", {
             "topic": res.topic, "subject": subject,
             "plan": plan, "reused": sorted(done),
@@ -1036,6 +1038,7 @@ class DeliverableAgent:
         }
         completed: list[SubtaskResult] = list(done.values())
 
+        # 审批后的计划可能被改过，事件里发的是**实际要执行的这份**，不是草稿。
         await self._emit(on_event, "plan", {
             "topic": res.topic, "subject": ckpt.subject,
             "plan": approved, "reused": sorted(done),
@@ -1208,6 +1211,8 @@ class ParallelDeliverableAgent(DeliverableAgent):
         ADR-001 §7.5 的已知限制里。
         """
         done = done or {}
+        # 带上原计划下标：并行执行时也要让事件的 index/total 与计划顺序一致，
+        # 否则前端进度条会按"谁先开跑"编号。
         pending_idx = [
             (i, spec) for i, spec in enumerate(plan, 1)
             if str(spec.get("name", "")) not in done

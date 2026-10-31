@@ -309,6 +309,39 @@ PyCharm 里打开项目后，右上角运行配置已经配好 4 个，免填：
 > 在这个环境下没生效，esbuild 的二进制拉不下来会直接导致 vite 起不来。
 > Windows 上必须用 `npm.cmd` 绕过 PowerShell 执行策略。
 
+### 交付物任务：计划 → 审批 → 执行（可选）
+
+前端「交付物任务」面板走的就是这条链路：**生成计划 → 勾选/取消子任务 → 批准并执行**，
+执行中能看到每个子任务的实时状态（等待 / 执行中 / 完成 n 条事实 / 空 / 截断 / 失败）。
+
+命令行等价（用 `curl.exe`，不要用 PowerShell 里指向 `Invoke-RestMethod` 的 `curl` 别名）：
+
+```powershell
+# 1) 只出计划：一次规划调用，不检索、不抽取
+curl.exe -s -X POST http://127.0.0.1:8000/api/deliverable/plan `
+  -H "Content-Type: application/json" `
+  -d '{"question":"整理三月七的养成指南","game":"sr"}'
+#    → 返回里带 run_id 与 plan（每条含 name / goal / queries）
+
+# 2) 批准执行：plan 原样照跑；也可以只保留一部分子任务（服务端会重新校验 1–6 条、名字唯一）
+curl.exe -s -X POST http://127.0.0.1:8000/api/deliverable/<run_id>/approve `
+  -H "Content-Type: application/json" -d '{}'
+
+# 3) 看实时进度：把 approve 换成 approve/stream
+#    事件顺序：plan → subtask_start → subtask_end → … → result
+curl.exe -N -X POST http://127.0.0.1:8000/api/deliverable/<run_id>/approve/stream `
+  -H "Content-Type: application/json" -d '{"plan":[...]}'
+
+# 4) 中断后重跑：已完成的子任务不会重花成本
+curl.exe -s -X POST http://127.0.0.1:8000/api/deliverable/<run_id>/resume
+
+# 5) 查进度：phase = awaiting_approval / running / done
+curl.exe -s http://127.0.0.1:8000/api/deliverable/<run_id>
+```
+
+> 流式端点建立连接后，404 / 409 / 400 会以 `event: error` 下发而不是 HTTP 状态码 ——
+> 这是 SSE 的固有限制（headers 已发出就改不了状态码）。
+
 ---
 
 ## 架构要点

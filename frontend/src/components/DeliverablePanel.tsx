@@ -306,6 +306,7 @@ export function DeliverablePanel({ health }: Props) {
         </div>
       )}
 
+      {/* 审批执行的实时进度：状态来自 SSE，与最终结果里的 sections 是同一份数据 */}
       {draft && busy && Object.keys(progress).length > 0 && (
         <div className="dv-progress">
           {draft.plan

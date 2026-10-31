@@ -609,6 +609,7 @@ async def deliverable_resume(run_id: str) -> dict:
 
 
 def _sse(event: str, data: dict) -> str:
+    """一帧 SSE：`event:` + `data:` 各一行，空行结尾（与 chat 流同一格式）。"""
     return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
 
 
@@ -625,6 +626,9 @@ async def _deliverable_sse(run) -> AsyncIterator[str]:  # noqa: ANN001 - 异步�
 
     task = asyncio.create_task(run(on_event))
     try:
+        # 队列 + 任务并行等：哪个先完成就处理哪个。
+        # 0.1s 超时不是限速，而是给 task 一个"检查是否已结束"的时机；
+        # 否则最后一个事件之后会一直阻塞在 queue.get() 上，直到客户端超时。
         while True:
             if task.done() and queue.empty():
                 break
