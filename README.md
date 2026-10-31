@@ -565,7 +565,7 @@ cd lorekeeper\backend
 | 可用性 | Chat 降级链：只对 429/5xx/超时降级，400/401 不重试；降级在响应 `fallback` 字段与 `/api/health` 留痕（`docs/fallback_chain.md`） |
 | 数据时效 | 版本更新：实测 wiki `recentchanges` 可穿过 WAF。⚠️ **两个口径别混**：落盘产物 `delta_sync_sr_7d.json` 是 **148/706 页（20.9%）、13 次请求**（`lower_bound: true`，窗口被 WAF 截断在 1003 页）；正文另记了一次翻完全部 2922 条的运行，得 **162 页 / 15 次请求**，但**那一跑没有落盘产物**。全量重抓要 71 次。⚠️ 全站口径 1157 页会得出"增量无意义"的**相反结论**。内容指纹已落库（1401 页 + 10843 chunk 100% 覆盖）；「归一化把格式误判从 100% 压到 0」是**探针按构造必然如此**（比原始字节则任何重格式化都算不同），别当战果讲（`docs/delta_sync.md`） |
 | Agent | 手搓 ReAct，工具注册表 4 个（`search_kb` / `get_page` / `calculator` / `list_games`），**生产默认只挂 `search_kb`**（`AGENT_TOOLS`，侧栏显示的就是实际生效的那份） + 4 道安全阀 + 熔断；不可答问题从 7 步/30317 token 降到 4 步/6514 token |
-| 交付物 | 规划 → 子任务 → 合并 → 冲突 → 渲染；并行执行（手写 `asyncio.gather`，**保序**）实测 n=18：墙钟 **−46%**（逐题配对中位数 0.537）、token +0.5%、36 次 0 error；**断点续跑**：每子任务落快照到 `data/runs/deliverable/<run_id>.json`，`POST /api/deliverable/{run_id}/resume` 只跑未完成项；**审批**：`/deliverable/plan` 只出计划、`/deliverable/{run_id}/approve` 按可改计划执行；**可观测**：`/deliverable/stream` 与 `/{run_id}/approve/stream` 边跑边发 `plan / subtask_start / subtask_end / result` 事件；**未迁 LangGraph**，理由与定价见 [ADR-001](docs/adr_001_orchestration.md) |
+| 交付物 | 规划 → 子任务 → 合并 → 冲突 → 渲染；并行执行（手写 `asyncio.gather`，**保序**）实测 n=18：墙钟 **−46.8%**（逐题配对中位数 0.532）、token（prompt+completion 合计）+0.5%（其中 prompt +0.86%、completion −2.39%）、36 次 0 error；**断点续跑**：每子任务落快照到 `data/runs/deliverable/<run_id>.json`，`POST /api/deliverable/{run_id}/resume` 只跑未完成项；**审批**：`/deliverable/plan` 只出计划、`/deliverable/{run_id}/approve` 按可改计划执行；**可观测**：`/deliverable/stream` 与 `/{run_id}/approve/stream` 边跑边发 `plan / subtask_start / subtask_end / result` 事件；**未迁 LangGraph**，理由与定价见 [ADR-001](docs/adr_001_orchestration.md) |
 | 框架对照 | 实验 G（sr 15 条，HAND vs LangGraph）：judge / 步数 / 延迟 / token **均无可测差异**（p 全 > 0.3，n=13 有效配对）；judge Δ=0.077 小于 A/A 噪声底 0.357 → **不迁**（[framework_comparison.md](docs/framework_comparison.md)） |
 | 多库路由 | 三态（库内/越界/未提及）；越界走无工具单轮，实测 0 步 / 1.1s，库内 3–5 步 / 5–8s |
 | MCP | 4 个工具以标准 MCP（SDK 2.3.0）暴露给外部 host，stdio 传输；**适配层与内置实现输出逐字符一致由守卫实跑保证**（16 项，真 `mcp.Client` 连真 server）。MCP 是**独立 server 入口**，本项目 Agent 始终走进程内直调，**两者之间没有运行时开关**（曾经有过 `TOOL_TRANSPORT`，核实发现无任何代码分支读它，已删），见 [docs/mcp.md](docs/mcp.md) |
@@ -766,6 +766,6 @@ embedding / rerank / judge **同时失效**，但：
    结论会偏向"语料多"而不是"路由对"，需要控制这个隐藏变量。
 
 4. ~~**补齐交付物的恢复 / 审批 / 可观测**~~ ✅ **已完成（2026-10-31）**
-   并行（n=18，墙钟 **−46%**、token **+0.5%**）、文件快照断点续跑、审批（计划先出、可改再执行）、
+   并行（n=18，墙钟 **−47%**、token **+0.5%**）、文件快照断点续跑、审批（计划先出、可改再执行）、
    可观测（`plan / subtask_start / subtask_end / result` 事件流）全部落地，四个缺口实际合计 **≈3.5–4 天**；
    迁移 LangGraph 要多付 **4.5–6 天**、只换来图级 trace，故**不迁**（ADR-001 §12/§13）。
