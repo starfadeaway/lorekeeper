@@ -125,3 +125,7 @@ _git_*.png
 pytest-of-*/
 jieba.cache
 
+
+# data/runs/ 是运行时快照（交付物断点续跑），可删除重跑。
+# 测试必须注入 InMemorySnapshotStore —— 2026-10-31 实测：P0 用例一次写进 38 个假快照。
+data/runs/

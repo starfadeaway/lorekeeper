@@ -67,6 +67,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from typing import Any, Protocol
 
+from app.agent.deliverable_store import Checkpoint, FileSnapshotStore, SnapshotStore
 from app.agent.tools import ToolContext
 from app.core.config import get_settings
 from app.llm.client import LLMClient, get_llm
@@ -661,11 +662,15 @@ class DeliverableAgent:
     def __init__(
         self, *, settings=None, llm: LLMClient | None = None,
         ctx: ToolContext | None = None, top_k: int = 5,
+        store: SnapshotStore | None = None,
     ) -> None:
         self.s = settings or get_settings()
         self.llm = llm or get_llm(self.s)
         self.ctx = ctx
         self.top_k = top_k
+        # 断点存储：默认落在 <DATA_ROOT>/runs/deliverable/。
+        # 测试与脚本可以注入 InMemorySnapshotStore，不碰磁盘。
+        self.store = store or FileSnapshotStore(self.s.data_root_abs / "runs" / "deliverable")
 
     # ---------------- 规划 ---------------- #
     async def plan(self, question: str) -> tuple[str, str, list[dict]]:
@@ -855,7 +860,8 @@ class DeliverableAgent:
 
     # ---------------- 主流程 ---------------- #
     async def _execute_plan(
-        self, plan: list[dict], ctx: ToolContext, subject: str
+        self, plan: list[dict], ctx: ToolContext, subject: str,
+        *, done: dict[str, SubtaskResult] | None = None, on_done=None,
     ) -> list[SubtaskResult]:
         """跑完一整份计划，返回**与 plan 同序**的子任务结果。
 
@@ -866,26 +872,83 @@ class DeliverableAgent:
         产物顺序 = 计划顺序，不能变成"谁先跑完谁在前"。
         并行版用 `asyncio.gather` 天然保序，但这条必须由调用方守住，
         否则两次运行之间段落顺序都会漂移，而且不报错。
+
+        `done` 是断点续跑带回来的"已完成子任务"（按名字匹配）：命中的直接复用，
+        不调用模型；`on_done` 在每个新完成的子任务后回调（用于落快照）。
         """
+        done = done or {}
         out: list[SubtaskResult] = []
         for spec in plan:
-            out.append(await self._run_subtask(spec, ctx, subject))
+            name = str(spec.get("name", ""))
+            st = done.get(name)
+            if st is None:
+                st = await self._run_subtask(spec, ctx, subject)
+                if on_done is not None:
+                    await on_done(st)
+            out.append(st)
         return out
 
-    async def run(self, question: str, *, game: str | None = None) -> DeliverableResult:
-        t0 = time.perf_counter()
-        ctx = self.ctx or ToolContext.build(game or self.s.game_primary)
-        if game:
-            ctx.game = game
-        res = DeliverableResult(
-            run_id=uuid.uuid4().hex[:16], topic=question, question=question,
-            game=ctx.game, generated_at=_stamp_now(),
-        )
-        # 时间戳用**本地时间**且不带时区后缀，理由见 `_stamp_now` 的 docstring。
-        res.topic, subject, plan = await self.plan(question)
-        res.subject = subject
-        res.subtasks = await self._execute_plan(plan, ctx, subject)
+    async def run(
+        self, question: str, *, game: str | None = None,
+        run_id: str | None = None, resume: bool = False,
+    ) -> DeliverableResult:
+        """跑一次交付物任务；`resume=True` 时从 `run_id` 的快照续跑。
 
+        续跑语义（v1，ADR-001 §7.5）：
+        - **不重新规划**：plan / subject / topic 全部取自快照；
+        - **已完成子任务不重跑**：按子任务名匹配，结果直接复用；
+        - 产物与"一次性跑完"逐字一致（除时间戳 / run_id）；
+        - 快照在每个子任务完成后落一次，崩溃最多丢当前那一个子任务。
+        """
+        t0 = time.perf_counter()
+        if resume:
+            if not run_id:
+                raise ValueError("resume 需要 run_id")
+            ckpt = await self.store.load(run_id)
+            if ckpt is None:
+                raise KeyError(run_id)
+            ctx = self.ctx or ToolContext.build(ckpt.game)
+            ctx.game = ckpt.game
+            res = DeliverableResult(
+                run_id=ckpt.run_id, topic=ckpt.topic, question=ckpt.question,
+                game=ckpt.game, subject=ckpt.subject, generated_at=_stamp_now(),
+            )
+            plan = list(ckpt.plan)
+            subject = ckpt.subject
+            done = {
+                str(st.get("name", "")): _subtask_from_dict(st) for st in ckpt.subtasks
+            }
+        else:
+            run_id = run_id or uuid.uuid4().hex[:16]
+            ctx = self.ctx or ToolContext.build(game or self.s.game_primary)
+            if game:
+                ctx.game = game
+            res = DeliverableResult(
+                run_id=run_id, topic=question, question=question,
+                game=ctx.game, generated_at=_stamp_now(),
+            )
+            # 时间戳用**本地时间**且不带时区后缀，理由见 `_stamp_now` 的 docstring。
+            res.topic, subject, plan = await self.plan(question)
+            res.subject = subject
+            done = {}
+            await self._checkpoint(res, plan, subject, [], "planned")
+
+        # 续跑带回来的已完成项也要进 completed：on_done 每次都落全量，
+        # 否则第二次崩溃会把上一次的进度覆盖成"只剩新跑的那几条"。
+        completed: list[SubtaskResult] = list(done.values())
+
+        async def on_done(st: SubtaskResult) -> None:
+            completed.append(st)
+            await self._checkpoint(res, plan, subject, completed, "running")
+
+        res.subtasks = await self._execute_plan(
+            plan, ctx, subject, done=done, on_done=on_done
+        )
+        self._finalize(res, t0, subject)
+        await self._checkpoint(res, plan, subject, res.subtasks, "done")
+        return res
+
+    def _finalize(self, res: DeliverableResult, t0: float, subject: str) -> None:
         res.conflicts = detect_conflicts([f for st in res.subtasks for f in st.facts])
         res.elapsed_ms = int((time.perf_counter() - t0) * 1000)
         res.meta = {
@@ -923,7 +986,29 @@ class DeliverableAgent:
                 )
             ),
         }
-        return res
+
+    async def _checkpoint(
+        self, res: DeliverableResult, plan: list[dict], subject: str,
+        completed: list[SubtaskResult], phase: str,
+    ) -> None:
+        ckpt = Checkpoint(
+            run_id=res.run_id, question=res.question, game=res.game,
+            topic=res.topic, subject=subject, plan=plan,
+            subtasks=[asdict(st) for st in completed], phase=phase,
+        )
+        try:
+            await self.store.save(ckpt)
+        except Exception as exc:  # noqa: BLE001
+            # 快照失败不该让主流程失败（用户要的是答案），但必须留日志 ——
+            # 否则"续跑不可用"会变成一次没人知道的静默降级。
+            logger.warning("交付物快照写入失败（run=%s, phase=%s）：%s", res.run_id, phase, exc)
+
+
+def _subtask_from_dict(data: dict) -> SubtaskResult:
+    """快照反序列化：`facts` 必须还原成 Fact，否则下游拿到的是 dict。"""
+    d = dict(data)
+    d["facts"] = [Fact(**f) for f in d.get("facts") or []]
+    return SubtaskResult(**d)
 
 
 class ParallelDeliverableAgent(DeliverableAgent):
@@ -961,12 +1046,38 @@ class ParallelDeliverableAgent(DeliverableAgent):
         self.parallel_limit = parallel_limit
 
     async def _execute_plan(
-        self, plan: list[dict], ctx: ToolContext, subject: str
+        self, plan: list[dict], ctx: ToolContext, subject: str,
+        *, done: dict[str, SubtaskResult] | None = None, on_done=None,
     ) -> list[SubtaskResult]:
+        """并行跑**尚未完成**的子任务；已完成的直接复用，结果仍按 plan 排序。
+
+        与串行版相比唯一的口径差异：`on_done` 在整批 gather 返回后**逐条**回调，
+        所以并行版每次落快照的粒度是"一批"，不是"一个"。崩溃时这一批里已经
+        跑完但还没回调的子任务不会被复用 —— 这是并行换墙钟的代价，写在
+        ADR-001 §7.5 的已知限制里。
+        """
+        done = done or {}
+        pending = [spec for spec in plan if str(spec.get("name", "")) not in done]
         sem = asyncio.Semaphore(self.parallel_limit)
 
         async def one(spec: dict) -> SubtaskResult:
             async with sem:
                 return await self._run_subtask(spec, ctx, subject)
 
-        return list(await asyncio.gather(*(one(spec) for spec in plan)))
+        results = await asyncio.gather(*(one(spec) for spec in pending))
+        fresh = {str(spec.get("name", "")): st for spec, st in zip(pending, results, strict=False)}
+
+        if on_done is not None:
+            for spec in plan:
+                st = fresh.get(str(spec.get("name", "")))
+                if st is not None:
+                    await on_done(st)
+
+        out: list[SubtaskResult] = []
+        for spec in plan:
+            name = str(spec.get("name", ""))
+            st = done.get(name) or fresh.get(name)
+            if st is None:  # pragma: no cover - plan 与 done/fresh 的键集必然对齐
+                raise RuntimeError(f"子任务 {name} 既不在快照里也没有新结果")
+            out.append(st)
+        return out

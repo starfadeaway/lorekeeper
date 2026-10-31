@@ -16,6 +16,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from app.agent.deliverable import DeliverableAgent, build_json, render_markdown
+from app.agent.deliverable_store import FileSnapshotStore
 from app.agent.react import UNCOVERED_GAMES, ReActAgent
 from app.agent.tools import ToolContext, get_schemas
 from app.core.config import get_settings
@@ -533,6 +534,19 @@ async def stats() -> dict:
     return {"collections": store.list_collections(), "mysql": db_status()}
 
 
+def _deliverable_payload(res) -> dict:  # noqa: ANN001 - DeliverableResult，避免顶层 import 循环
+    return {
+        "run_id": res.run_id,
+        "markdown": render_markdown(res),
+        "json": build_json(res),
+        "status_counts": {
+            k: v for k, v in res.meta.items() if k.startswith("subtasks_")
+        },
+        "conflicts_total": len(res.conflicts),
+        "elapsed_ms": res.elapsed_ms,
+    }
+
+
 @api_router.post("/deliverable")
 async def deliverable(req: DeliverableRequest) -> dict:
     """交付物任务：一次请求产出 Markdown + JSON 两份产物。
@@ -552,17 +566,55 @@ async def deliverable(req: DeliverableRequest) -> dict:
 
     返回里 `status_counts` 是给调用方看的健康度：全 empty 说明规划或抽取
     这条链出了问题，而不是「知识库里确实没这些内容」。
+
+    **断点续跑**：返回值里新增 `run_id`。每个子任务跑完都会落一份快照；
+    进程崩了之后用 `POST /api/deliverable/{run_id}/resume` 接着跑，
+    已完成的子任务不会重花成本。
     """
     agent = DeliverableAgent(settings=_settings)
     res = await agent.run(req.question, game=req.game)
+    return _deliverable_payload(res)
+
+
+@api_router.post("/deliverable/{run_id}/resume")
+async def deliverable_resume(run_id: str) -> dict:
+    """从快照续跑：不重新规划，已完成子任务直接复用。
+
+    返回结构与 `/deliverable` 完全一致 —— 前端不需要为续跑写第二套渲染。
+    快照不存在返回 404；快照损坏会被存储层当成"没有快照"处理（重跑），
+    不会把 500 抛给调用方。
+    """
+    agent = DeliverableAgent(settings=_settings)
+    try:
+        res = await agent.run("", resume=True, run_id=run_id)
+    except KeyError as exc:
+        raise HTTPException(
+            status_code=404, detail=f"没有 run_id={run_id} 的交付物快照"
+        ) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return _deliverable_payload(res)
+
+
+@api_router.get("/deliverable/{run_id}")
+async def deliverable_status(run_id: str) -> dict:
+    """查快照进度：哪些子任务已完成、还差哪些。续跑前先问一次。"""
+    store = FileSnapshotStore(_settings.data_root_abs / "runs" / "deliverable")
+    try:
+        ckpt = await store.load(run_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    if ckpt is None:
+        raise HTTPException(status_code=404, detail="快照不存在")
     return {
-        "markdown": render_markdown(res),
-        "json": build_json(res),
-        "status_counts": {
-            k: v for k, v in res.meta.items() if k.startswith("subtasks_")
-        },
-        "conflicts_total": len(res.conflicts),
-        "elapsed_ms": res.elapsed_ms,
+        "run_id": ckpt.run_id,
+        "phase": ckpt.phase,
+        "question": ckpt.question,
+        "game": ckpt.game,
+        "topic": ckpt.topic,
+        "completed": sorted(ckpt.completed_names()),
+        "plan": [p.get("name") for p in ckpt.plan],
+        "updated_at": ckpt.updated_at,
     }
 
 

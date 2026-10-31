@@ -58,6 +58,7 @@ from app.agent.deliverable import (
     build_json,
     render_markdown,
 )
+from app.agent.deliverable_store import InMemorySnapshotStore
 from app.agent.tools import ToolContext
 from app.retrieval.hybrid import RetrievalHit
 from app.store.types import RetrievedChunk
@@ -161,7 +162,11 @@ def make_agent(settings, script: list[dict], retriever: FakeRetriever, *, top_k:
         settings=settings, retriever=retriever, store=None,
         game="sr", disclose_revision=True,
     )
-    return DeliverableAgent(settings=settings, llm=FakeLLM(script), ctx=ctx, top_k=top_k)
+    return DeliverableAgent(
+        settings=settings, llm=FakeLLM(script), ctx=ctx, top_k=top_k,
+        # 断点快照注入内存替身：不给的话每个用例都会往 data/runs/ 写文件。
+        store=InMemorySnapshotStore(),
+    )
 
 
 def canonical(res) -> tuple[str, dict]:
@@ -542,7 +547,10 @@ def _parallel_fixture(settings, *, delay_for: dict[str, float] | None = None):
             settings=settings, retriever=retriever, store=None,
             game="sr", disclose_revision=True,
         )
-        return agent_cls(settings=settings, llm=llm, ctx=ctx, top_k=5, **kwargs), retriever
+        return agent_cls(
+            settings=settings, llm=llm, ctx=ctx, top_k=5,
+            store=InMemorySnapshotStore(), **kwargs,
+        ), retriever
 
     return build
 

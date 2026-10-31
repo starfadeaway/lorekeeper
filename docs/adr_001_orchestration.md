@@ -21,7 +21,7 @@ JD 侧的事实（30 秒版）：
 | 事实 | 证据 |
 |---|---|
 | 两条在线路径形态完全不同：chat 是单轮 ReAct（库内应答 **6~8s**，SSE 流式），deliverable 是规划 + 3–6 个子任务（**40–60s，同步阻塞**） | `ARCHITECTURE.md` 第三节、`app/main.py` 的 `/api/deliverable` 注释 |
-| chat 有 SSE 事件契约、五条终止路径的 FakeLLM 测试与故障注入，另有 832 项测试整体兜底 | `backend/tests/`、`EVALUATION.md` |
+| chat 有 SSE 事件契约、五条终止路径的 FakeLLM 测试与故障注入，另有 838 项测试整体兜底 | `backend/tests/`、`EVALUATION.md` |
 | deliverable 只有纯函数层测试（36 条），**编排层零测试** | `test_deliverable_pure.py` |
 | deliverable 是串行执行：子任务数由规划器决定（`PLAN_PROMPT` 要求 3–6 个），每个子任务 = 2–4 次检索 + 1 次抽取 | `deliverable.py` 的 `run()` / `PLAN_PROMPT` |
 | 生产路径零框架依赖：`/api/chat`、`/api/deliverable` 的 import 图里没有 langchain / llama-index；`langgraph` 仅被实验 G 的对照臂引用 | `backend/requirements.txt`、`react_langgraph.py` |
@@ -120,7 +120,7 @@ chat 的需求是：**低延迟、精确停机、事件按固定顺序外发**�
 
 - deliverable 从"一次调用跑几十秒的同步接口"变成"可暂停、可恢复、可并行的工作流"，这是能现场演示的东西；
 - 面试可讲的不再是"我评估过框架"，而是"我在需要状态与恢复的那一层用了框架，其余层没用，理由是 X"；
-- 新增 HTTP 端到端测试（`TestClient`），补上现有 832 项测试里"没有一条真发 HTTP"的空白。
+- 新增 HTTP 端到端测试（`TestClient`），补上现有 838 项测试里"没有一条真发 HTTP"的空白。
 
 **负向**
 
@@ -140,7 +140,7 @@ chat 的需求是：**低延迟、精确停机、事件按固定顺序外发**�
 
 | 模块 | 动作 | 理由 |
 |---|---|---|
-| `app/agent/react.py` | **冻结** | 生产 chat 路径 + 832 测试的重心；任何行为变更都会污染 A–F |
+| `app/agent/react.py` | **冻结** | 生产 chat 路径 + 838 测试的重心；任何行为变更都会污染 A–F |
 | `app/agent/deliverable.py` | 保留全部纯函数与 dataclass；`run()` 拆成节点可调用的方法 | 纯函数是这次迁移唯一稳定的地基 |
 | `app/agent/workflow.py` | **新增**：状态图、节点、Send、checkpoint、事件映射 | 不侵入现有模块 |
 | `app/agent/workflow.py` 的 fan-out | 新增**子任务级**并发闸门 + `max_concurrency` 配置 | 现有 `_semaphore` 只挡入口请求，不限制图内并行度 |
@@ -211,9 +211,10 @@ class WorkflowState(TypedDict, total=False):
 ### 7.5 失败与恢复语义
 
 - **单子任务失败**：该子任务返回 `status=error` 的结果，不阻塞其他子任务（现有 `_run_subtask` 已是这个语义，保持不变）；
-- **进程崩溃**：从 `deliverable_runs.state_json` 恢复，`results` 里已完成的子任务不重跑（以子任务名为去重键）；
-- **审批未发生**：checkpoint 保留，可稍后 `resume`；
-- **图抛异常**：写 `errors` + 保留最后一版快照，`phase=failed`，不把半截结果当完整交付物。
+- **进程崩溃 / 重启**：从 `<DATA_ROOT>/runs/deliverable/<run_id>.json` 的快照续跑；已完成的子任务按 **子任务名** 匹配直接复用，不重跑（v1 用文件，不依赖 MySQL）；
+- **快照粒度**：串行版每完成一个子任务落一次；并行版每批 `gather` 返回后落一次（崩溃时最多丢当前这一批）；
+- **API**：`POST /api/deliverable/{run_id}/resume` 续跑、`GET /api/deliverable/{run_id}` 查进度；续跑返回结构与 `/deliverable` 一致；
+- **快照缺失 / 损坏**：存储层按"没有快照"处理（重跑），不把 500 抛给调用方。
 
 ---
 
@@ -231,7 +232,7 @@ class WorkflowState(TypedDict, total=False):
 | 行为等价（真实 API） | 归一化后等价（剥 `Nms`、归一化 `tool_call` id 与 tool 消息的 `tool_call_id`）；步数 / 工具序列相同率不低于 A/A 基线（12/15、10/15）；答案 judge 差值须**超过噪声底** | 同一批 10 条任务，before/after；噪声底见下 |
 | 成本可解释 | token 变化必须实测：n=18 实测 **+0.5%**（330,389 → 332,119；单轮在 +4.6% ~ −4.7% 之间波动，属噪声）；并发度上调后再看 KV cache 是否退化 | 同批任务三轮合计 usage |
 | 断点续跑 | 杀掉进程后 resume 能完成，且已完成的子任务调用次数为 0 | 计数断言（FakeLLM / 打点） |
-| chat 未受影响 | `/api/chat` 与 `/api/chat/stream` 的事件结构与答案不变；`main.py` 不 import 新模块 | 源码断言 + 现有 832 项测试 |
+| chat 未受影响 | `/api/chat` 与 `/api/chat/stream` 的事件结构与答案不变；`main.py` 不 import 新模块 | 源码断言 + 现有 838 项测试 |
 | 测试 | 新增 ≥ 25 项：图结构、并行、interrupt/resume、快照序列化、HTTP 端到端 | pytest |
 | 静态检查 | `ruff check .` 全绿 | CI |
 
@@ -313,32 +314,32 @@ class WorkflowState(TypedDict, total=False):
 | 缺口 | 手写成本 | 关键改动 | 为什么不是更少 |
 |---|---|---|---|
 | **并行** | ✅ 已完成并实测（≈0.5 天） | `deliverable.py` 的 `_execute_plan` 接缝 + `ParallelDeliverableAgent`（约 55 行）+ 2 条用例 | n=18（6 题 × 3 轮，ABBA）：逐题配对比值中位数 **0.537（墙钟 −46%）**，18/18 次更快（符号检验 p≈7.6e-6）；token +0.5%、facts +0.6%、36 次运行 0 error。产物 `data/eval/exp_deliverable_parallel{,_r2,_r3}.json` |
-| **恢复** | ≈1.5–2 天 | `models.py` 新表、`persist.py` 存取、`deliverable.py` 跳过已完成、`main.py` resume 端点、4 条用例、重导 `db/kb_agent.sql` | 不是"一个 completed 集合"：要快照序列化 + 幂等键 + 崩溃后重新加载 + 表变更（`create_all` 自动建表，但 SQL 快照要重导） |
+| **恢复** | ✅ v1 已完成（≈1 天） | `deliverable_store.py`（快照 + Protocol 接缝）、`run(resume=True)`、2 个端点、6 条用例 | 原计划建 `deliverable_runs` 表；实际用文件快照（MySQL 曾停服，恢复能力不该绑在它上面）。多实例部署时此实现不成立，换 MySQL/Redis 只需实现 `SnapshotStore` 两个方法 |
 | **审批** | ≈1.5–2 天 | `deliverable.py` 的 plan-only 入口、`main.py` 2 个端点、`DeliverablePanel.tsx`（386 行）加计划卡片/编辑/批准、`types.ts` / `api.ts` | 大头是前端交互；"停在 plan"在后端只是一次返回，但"可改计划再执行"要求计划可序列化、可回传 |
 | **可观测** | ≈1–1.5 天 | `deliverable.py` 事件 generator、`main.py` SSE、前端进度、2 条用例 | 现在是"一次性返回"，要新增事件模型与顺序约定；可复用 chat 的 SSE 外壳，但事件本身要新定义 |
-| **合计** | **≈4–5.5 天** | | 并行已交付；剩余 = 恢复 1.5–2 + 审批 1.5–2 + 可观测 1–1.5；不含已完成的 P0（约 1 天） |
+| **合计** | **≈2.5–3.5 天（剩余）** | | 并行 / 恢复已交付；剩余 = 审批 1.5–2 + 可观测 1–1.5；不含已完成的 P0 |
 
-**对照框架版**：P2 8–10 天（含 checkpoint、interrupt、前端、测试、文档）。手写剩余 **4–5.5 天**，差额 **3–4.5 天**；并行收益已由手写实现拿到，框架不再"更快"，剩下的可买项只有**标准状态语义 + 图级 trace**。
+**对照框架版**：P2 8–10 天（含 checkpoint、interrupt、前端、测试、文档）。手写剩余 **2.5–3.5 天**，差额 **4.5–7.5 天**；并行与断点续跑都已由手写拿到，框架剩下的可买项只有**标准状态语义 + 图级 trace**。
 
 **这张表怎么读**：
 
 - 只做 1–2 个缺口（例如并行 + 可观测）→ 手写 1.5–2 天，远低于框架溢价，**不迁**；
-- 四个都做 → 手写 4–5.5 天 vs 框架 8–10 天，框架多付 3–4.5 天，买的是"标准状态机语义 + 图级 trace + 社区维护"；
+- 四个都做 → 手写合计 **≈4.5–5.5 天**（并行 0.5 + 恢复 1 + 审批 1.5–2 + 可观测 1–1.5）vs 框架 8–10 天，框架多付 4.5–7.5 天，买的是"标准状态机语义 + 图级 trace + 社区维护"；
 - **前端审批 UI 两边都要写**（约 2 天），已从框架收益里扣除 —— 这是上一轮评审里最容易被漏掉的一项。
 
-**结论（2026-10-30）**：按此表，C 相对 A 的差额是 3–4.5 天，且并行收益已由手写拿到 —— **C 否决，采纳 A**（见 §5、§13）。
+**结论（2026-10-30）**：按此表，C 相对 A 的差额是 4.5–7.5 天，且并行与断点续跑都已由手写拿到 —— **C 否决，采纳 A**（见 §5、§13）。
 
 ---
 
 ## 13. 为什么不用 LangGraph（结论与证据）
 
-一句话：**不是框架不好，是它在本项目的两条路径上都买不到足以支付 3–4.5 天差额的东西。**
+一句话：**不是框架不好，是它在本项目的两条路径上都买不到足以支付 4.5–7.5 天差额的东西。**
 
 | 问题 | 证据 | 结论 |
 |---|---|---|
 | chat 要不要迁？ | 需要精确控制四道安全阀、熔断、SSE 事件契约，且不能动 A–F 的可比性；LangGraph 1.2 起连 prebuilt 的 `create_react_agent` 都迁走了（要自己搭节点） | 迁过去也是手搭节点，收益 0、风险实 → **不迁** |
 | deliverable 的并行要不要靠框架？ | 手写 `asyncio.gather` 已实现并实测：n=18，逐题配对比值中位数 0.537（墙钟 **−46%**），18/18 次更快（符号检验 p≈7.6e-6），token **+0.5%**、facts +0.6%、36 次 0 error | 手写 0.5 天拿到全部并行收益 → **不需要框架** |
-| 剩下的恢复 / 审批 / 可观测？ | 手写剩余 **4–5.5 天** vs 框架 8–10 天；其中约 2 天的审批 UI 两边都要写 | 框架贵 3–4.5 天，只多买"标准状态语义 + 图级 trace" |
+| 剩下的审批 / 可观测？ | 手写剩余 **2.5–3.5 天** vs 框架 8–10 天（框架版还要重做已完成的并行与续跑）；其中约 2 天的审批 UI 两边都要写 | 框架贵 4.5–7.5 天，只多买"标准状态语义 + 图级 trace" |
 | 框架能让答案更好吗？ | A/A 噪声底：同实现重跑，judge 平均 \|Δ\| **0.357**（仅 7 对有效，8 对 Judge 超时被剔除）、最大 1.5 | 迁移带来的任何 <1.5 分的"质量提升"，本项目**读不出来** |
 
 **什么情况下会改用 LangGraph**：需要跨进程 / 多实例的 durable execution、人工审核成为产品主流程、或团队要共用一套图与 trace。那是"运维与协作"需求，不是"能力"需求 —— 届时 §7 的实施边界可以直接拿来用。
