@@ -120,7 +120,7 @@ python backend/scripts/scan_corpus_injection.py
 - 语料每次重抓都会变，`injection_scan.json` 里的 0 命中只对当时那版语料成立。
   改了入库规则就该重跑一次。
 
-## 面试口径
+## 技术答辩口径
 
 不是"我加了正则过滤注入"，而是：
 
