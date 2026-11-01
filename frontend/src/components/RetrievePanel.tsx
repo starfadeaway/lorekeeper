@@ -17,7 +17,7 @@ interface Props {
 /**
  * 检索调试台：不开 Agent，直接调 /retrieve 对比不同检索策略。
  * 这是把「实验 A 的结论」变成可以当场演示的东西 ——
- * 面试时不用念 PPT，改一个开关就能看到 top-5 换一批。
+ * 技术答辩时不用念 PPT，改一个开关就能看到 top-5 换一批。
  */
 export function RetrievePanel({ health, onOpenSettings }: Props) {
   const [query, setQuery] = useState('位面饰品太空封印站的两件套效果是什么')

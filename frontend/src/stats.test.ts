@@ -3,7 +3,7 @@
  *
  * 这条 bug 曾经靠 `tsc` 的类型不匹配偶然挡住（collection 缺 game/variant
  * 字段），但类型检查不是测试 —— 它只说明「形状不对」，不说明「算错了」。
- * 而这些数字会被拿去写简历，所以值得单独锁住。
+ * 而这些数字会被拿去写结论，所以值得单独锁住。
  */
 import { describe, expect, it } from 'vitest'
 

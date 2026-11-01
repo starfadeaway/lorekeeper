@@ -6,7 +6,7 @@
 `run_eval.py` 反而显式把它置 None。
 
 症状是"说得到、演示不出来"：README/ARCHITECTURE 都把版本感知当卖点写着，
-面试被问"怎么演示"却只能在 Python 里跑。这组测试盯住入口真的存在。
+技术答辩被问"怎么演示"却只能在 Python 里跑。这组测试盯住入口真的存在。
 """
 
 from __future__ import annotations

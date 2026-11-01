@@ -10,11 +10,11 @@
 
 ## 1. 背景
 
-JD 侧的事实（30 秒版）：
+技术栈侧的事实（30 秒版）：
 
-- 2026 年国内 AI 应用开发岗的 JD 里，LangChain / LangGraph / LlamaIndex 出现频率高，措辞以「至少一种」「优先」「加分项」为主；
+- 2026 年公开的 AI 应用技术栈讨论里，LangChain / LangGraph / LlamaIndex 出现频率高，常见表述是「至少一种」「优先」「加分项」；
 - **RAG 已经从"能力项"降为"基础设施项"** —— 被当作前提，而不是卖点；
-- 唯一把 RAG 写成硬门槛的 JD，写的是「有主导建设完整 RAG 系统的实践经验，**而非仅限于组件调用**」。
+- 把 RAG 写成硬门槛的那类描述是：「有主导建设完整 RAG 系统的实践经验，**而非仅限于组件调用**」。
 
 项目侧的事实：
 
@@ -40,7 +40,7 @@ JD 侧的事实（30 秒版）：
 - **Q1**：chat 的 ReAct 循环要不要换成 LangGraph？
 - **Q2**：deliverable 的编排要不要换成 LangGraph？
 - **Q3**：检索 / 入库要不要换成 LlamaIndex 或 LangChain 的组件？
-- **Q4**：要不要为了 JD 关键词迁一层？
+- **Q4**：要不要为了生态关键词迁一层？
 
 ---
 
@@ -269,7 +269,7 @@ class WorkflowState(TypedDict, total=False):
 | 并行触发上游 429 | 中 | 中 | **新增子任务级闸门**（现有 `_semaphore` 只挡入口请求）；`max_concurrency` 可配 |
 | checkpoint 快照与图状态不一致 | 中 | 高 | 快照带 `phase` + `state_version`；resume 前校验 |
 | 迁移期间无法演示 | 中 | 高 | `/api/deliverable` 保持旧实现可切换（`DELIVERABLE_ENGINE=legacy\|graph`） |
-| 叙事反噬："为了 JD 改的" | 低 | 中 | 本 ADR + chat 冻结就是回答 |
+| 叙事反噬："为了追新而改的" | 低 | 中 | 本 ADR + chat 冻结就是回答 |
 
 **回退开关**：`DELIVERABLE_ENGINE=legacy` 一行环境变量回退到现有 `DeliverableAgent`，保留两条路径直到验收达标。
 
@@ -374,7 +374,7 @@ class WorkflowState(TypedDict, total=False):
 | 1 | chat 要不要一起迁 | 不迁，冻结 | "全仓 LangGraph"故事更完整，技术答辩时不用解释两套实现 |
 | 2 | checkpoint 用社区包还是自建 | P1 自建快照，P2 再评估 | 社区包一行 `checkpointer=` 就能用，自建是重复造轮子 |
 | 3 | HITL 放在哪 | plan 之后、执行之前 | 每个子任务前也停一次，能省更多钱（但会让 6 次点击变成负担） |
-| 4 | 只上 LangGraph 还是连 LangChain 一起 | 只用 `langgraph`（隐含 `langchain-core`），不引 `langchain` 全家桶 | JD 写的是 LangChain，只写 LangGraph 可能被追问 |
+| 4 | 只上 LangGraph 还是连 LangChain 一起 | 只用 `langgraph`（隐含 `langchain-core`），不引 `langchain` 全家桶 | 生态讨论里通常写 LangChain，只写 LangGraph 可能被追问 |
 | 5 | LlamaIndex 做不做对照臂 | 可做，但不进本次 ADR | 一条命令换框架、用现成评测集，3–5 天能拿一个数字，性价比高 |
 | 6 | 保留 `/api/deliverable` 同步接口 | 保留（兼容 + 回退） | 两套入口会让"到底哪条是生产路径"变模糊 |
 

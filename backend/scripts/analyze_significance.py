@@ -28,7 +28,7 @@ from exp_common import (
 
 def load(name: str) -> list[dict]:
     # 曾经这里写死本机绝对路径（C:\Users\Liu\...），换台机器就找不到文件 ——
-    # 而这个脚本的产物是要写进简历的量化数字，不能只在作者本机跑得通。
+    # 而这个脚本的产物是要写进结论的量化数字，不能只在作者本机跑得通。
     # 复用 exp_common 的 EVAL_DIR，和 save 落盘的那份永远是同一个目录。
     p = EVAL_DIR / name
     data = json.loads(p.read_text(encoding="utf-8"))

@@ -118,7 +118,7 @@ def test_delta_report_has_no_new_pages():
     """`DeltaReport.new_pages` 已删：全仓没有任何 append，恒为空。
 
     于是 `new_pages_count` 恒为 0 —— 一个恒零的统计项被写进了
-    `data/eval/delta_sync_*.json` 这类要写进简历的证据文件，
+    `data/eval/delta_sync_*.json` 这类要写进结论的证据文件，
     读的人要花时间确认「0 是不是真的没有新增页」。
     """
     from app.ingest.delta_sync import DeltaReport

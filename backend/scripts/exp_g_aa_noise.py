@@ -425,7 +425,7 @@ async def main() -> None:
                     help="正式统计前先跑几条把连接与缓存热起来（结果丢弃）")
     ap.add_argument("--judge", action="store_true",
                     help="额外给两遍的答案各打一次分 —— 量 Judge 侧噪声，"
-                         "这是直接决定简历上 judge 类数字可信度的那一层")
+                         "这是直接决定对外 judge 类数字可信度的那一层")
     ap.add_argument("--out", default="exp_G_aa_noise.json")
     args = ap.parse_args()
 

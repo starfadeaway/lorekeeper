@@ -173,7 +173,7 @@ class Message(Base):
 
 
 class Run(Base):
-    """一次 Agent 运行 = 一条可复现轨迹（面试里讲"可观测性"的抓手）。"""
+    """一次 Agent 运行 = 一条可复现轨迹（技术答辩里讲"可观测性"的抓手）。"""
 
     __tablename__ = "runs"
     __table_args__ = (Index("ix_runs_session", "session_key", "id"),)
@@ -198,7 +198,7 @@ class Run(Base):
 
 
 class ToolCallLog(Base):
-    """一次 run 内每个工具调用一行 —— Agent 轨迹的最小单位，面试讲可复现性的依据。
+    """一次 run 内每个工具调用一行 —— Agent 轨迹的最小单位，技术答辩讲可复现性的依据。
 
     与 `runs` 的分工：`runs` 存聚合数（steps / tool_failures 各一个总数），
     这里存逐条明细（含 args 与 error）。要复现一次失败的回答，

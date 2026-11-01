@@ -1,7 +1,7 @@
 """FastAPI 入口。
 
 设计取向：接口先于前端交付。每个端点都能用 curl 直接验证，
-面试演示时不用依赖前端起服务。
+技术答辩演示时不用依赖前端起服务。
 """
 from __future__ import annotations
 

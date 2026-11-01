@@ -425,7 +425,7 @@ def get_vector_store(settings: Settings | None = None):
 
     **只有这两个后端。** 早先这里还列过一个 sqlite 后端，但 `sqlite3` /
     `SQLiteStore` 在 `app/` 下从来没有任何实现 —— 那是一句写在注释里的
-    虚构实现。宣传一个不存在的东西比不宣传更糟：面试官追问"第三个后端怎么
+    虚构实现。宣传一个不存在的东西比不宣传更糟：评审追问"第三个后端怎么
     实现的"会当场露底。现在由 `tests/test_store_parity.py` 的
     `test_no_phantom_backend_declared` 守住：docstring 与 config 注释里
     出现的每个后端名都必须有对应实现。

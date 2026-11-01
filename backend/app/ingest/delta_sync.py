@@ -86,7 +86,7 @@ class DeltaReport:
             "revision_only_count": len(self.revision_only),
             # 早先这里有 "new_pages_count": len(self.new_pages)，而 new_pages
             # 全仓没有任何 .append —— 恒为 0。一个恒零的统计项写进了要写进
-            # 简历的证据文件，读的人却要花时间确认「0 是不是真没新增页」。
+            # 结论的证据文件，读的人却要花时间确认「0 是不是真没新增页」。
             # 真的没有就删掉，不要留一个占位数字。
             "requests": {
                 "level1_recentchanges": self.requests_level1,
@@ -310,7 +310,7 @@ async def main(game: str, days: int) -> int:
 
     # 报告的读法：只有 `lower_bound=False`（即 window_exhausted=True）时，
     # 「近 N 天零变更」才是个结论；为 True 时它只说明"已读到的部分没有变更"。
-    # 产物必须落盘：这些数字要写进文档与简历，只留在终端输出里等于无法追溯。
+    # 产物必须落盘：这些数字要写进文档与结论，只留在终端输出里等于无法追溯。
     # 路径是 parents[3] 不是 parents[2]：本文件在 backend/app/ingest/ 下，
     # parents[2] 指向的是 backend/，产物会落到 backend/data/eval/ ——
     # 那个路径不匹配任何 .gitignore 规则，会被误提交进仓库。

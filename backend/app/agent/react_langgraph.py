@@ -2,8 +2,8 @@
 
 ## 为什么要做这个文件
 
-2026 年国内 AI 应用开发岗位的 JD 里，LangChain / LangGraph / LlamaIndex 出现频率很高。
-本项目是手写 ReAct 内核（`react.py`），简历上明写「未依赖 LangChain / LlamaIndex」。
+2026 年公开的 AI 应用技术栈讨论里，LangChain / LangGraph / LlamaIndex 出现频率很高。
+本项目是手写 ReAct 内核（`react.py`），项目定位里明写「未依赖 LangChain / LlamaIndex」。
 这条差异化不该为了迎合关键词丢掉，但「没用过」和「评估过并给出结论」是两件事：
 前者要挨反问，后者要拿数据说话。
 

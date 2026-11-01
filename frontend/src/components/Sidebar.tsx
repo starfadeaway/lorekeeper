@@ -37,9 +37,9 @@ export function Sidebar({
    *
    * 实验 B/D 会在同一游戏下建出 b1/b2/b3 和 qwen 等变体库，把它们一并加进来
    * 会让"星铁 9,986 片段"这种数字出现 —— 实际生产 base 库只有 3932。
-   * 这种数字会被拿去写简历，必须是真实的。
+   * 这种数字会被拿去写结论，必须是真实的。
    */
-    // 统计逻辑提到 stats.ts 了 —— 它算出来的数字会被拿去写简历，
+    // 统计逻辑提到 stats.ts 了 —— 它算出来的数字会被拿去写结论，
     // 必须能单测（此前只靠 tsc 的类型不匹配偶然挡住，那不是测试）。
     const productionModel = health?.embed_model
     const chunks = countProductionChunks(collections, productionModel)

@@ -4,7 +4,7 @@
 `/chat` 默认只给 `search_kb`」，但 `main.py` 构造 Agent 时**没传 tools**，
 而 `ReActAgent.__init__` 的兜底是 `get_schemas()`（全量）。
 于是线上跑的是 C2 形态，而文档声称收敛到了 C1 ——
-这种"结论和实现不一致"面试被翻代码就穿了，所以必须有断言锁住。
+这种"结论和实现不一致"技术答辩被翻代码就穿了，所以必须有断言锁住。
 """
 
 from __future__ import annotations
