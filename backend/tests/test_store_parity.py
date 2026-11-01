@@ -156,7 +156,7 @@ def test_search_returns_same_ranking_for_same_query(stores_probe, chunk_meta):
 # 而 `sqlite3` / `SQLiteStore` 在 `app/` 下**从来没有任何实现**。
 #
 # 一句注释里的虚构实现比不写更糟：评审追问「第三个后端怎么实现的」
-# 会当场露底，而且它恰好出现在要写进结论的这个项目里。
+# 会当场露底，而且它恰好出现在要对外引用的这个项目里。
 #
 # 双向验证：对修复前的代码快照实跑本文件，这组断言必须失败。
 

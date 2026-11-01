@@ -85,8 +85,8 @@ class DeltaReport:
             "changed_count": len(self.changed),
             "revision_only_count": len(self.revision_only),
             # 早先这里有 "new_pages_count": len(self.new_pages)，而 new_pages
-            # 全仓没有任何 .append —— 恒为 0。一个恒零的统计项写进了要写进
-            # 结论的证据文件，读的人却要花时间确认「0 是不是真没新增页」。
+            # 全仓没有任何 .append —— 恒为 0。一个恒零的统计项写进了要对外引用的
+            # 证据文件，读的人却要花时间确认「0 是不是真没新增页」。
             # 真的没有就删掉，不要留一个占位数字。
             "requests": {
                 "level1_recentchanges": self.requests_level1,

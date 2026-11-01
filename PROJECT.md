@@ -155,4 +155,4 @@ cd frontend; npm run dev
 | [`EVALUATION.md`](EVALUATION.md) | 全部实验数据、配对检验、方法论教训 |
 | [`docs/failure_analysis.md`](docs/failure_analysis.md) | 四类失败模式与已知盲区 |
 | [`docs/adr_001_orchestration.md`](docs/adr_001_orchestration.md) | 编排层框架选型：chat 为什么冻结手写、deliverable 为什么不迁 LangGraph（实测 + 定价表） |
-| [`docs/comparison_with_rag.md`](docs/comparison_with_rag.md) | 与通用 RAG 方案的差异、差距清单、技术答辩讲法 |
+| [`docs/comparison_with_rag.md`](docs/comparison_with_rag.md) | 与通用 RAG 方案的差异、差距清单、对外讲法 |
