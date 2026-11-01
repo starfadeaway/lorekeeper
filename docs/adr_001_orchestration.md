@@ -21,7 +21,7 @@ JD 侧的事实（30 秒版）：
 | 事实 | 证据 |
 |---|---|
 | 两条在线路径形态完全不同：chat 是单轮 ReAct（库内应答 **6~8s**，SSE 流式），deliverable 是规划 + 3–6 个子任务（**40–60s，同步阻塞**） | `ARCHITECTURE.md` 第三节、`app/main.py` 的 `/api/deliverable` 注释 |
-| chat 有 SSE 事件契约、五条终止路径的 FakeLLM 测试与故障注入，另有 864 项测试整体兜底 | `backend/tests/`、`EVALUATION.md` |
+| chat 有 SSE 事件契约、五条终止路径的 FakeLLM 测试与故障注入，另有 869 项测试整体兜底 | `backend/tests/`、`EVALUATION.md` |
 | deliverable 只有纯函数层测试（36 条），**编排层零测试** | `test_deliverable_pure.py` |
 | deliverable 是串行执行：子任务数由规划器决定（`PLAN_PROMPT` 要求 3–6 个），每个子任务 = 2–4 次检索 + 1 次抽取 | `deliverable.py` 的 `run()` / `PLAN_PROMPT` |
 | 生产路径零框架依赖：`/api/chat`、`/api/deliverable` 的 import 图里没有 langchain / llama-index；`langgraph` 仅被实验 G 的对照臂引用 | `backend/requirements.txt`、`react_langgraph.py` |
@@ -124,7 +124,7 @@ chat 的需求是：**低延迟、精确停机、事件按固定顺序外发**�
 
 - deliverable 从"一次调用跑几十秒的同步接口"变成"可暂停、可恢复、可并行的工作流"，这是能现场演示的东西；
 - 面试可讲的不再是"我评估过框架"，而是"我在需要状态与恢复的那一层用了框架，其余层没用，理由是 X"；
-- ⚠️ **chat 端点的 HTTP 端到端测试至今一条都没有** —— 交付物端点已有 **8 条 ASGI 测试**（`backend/tests/test_deliverable_http.py`），但 `/api/chat` 与 `/api/chat/stream` 仍无 HTTP 层验证（见 §8「测试」行）。这是本轮**未结账**的一项，别写成已补齐。
+- ✅ **已补（不依赖迁移）**：chat 的 HTTP 端到端 **5 条**（`backend/tests/test_http_endpoints.py`），覆盖 `/api/health`、`/api/retrieve`、`/api/chat`、`/api/chat/stream` 的 SSE 帧顺序、以及请求体缺字段的 422；交付物端另有 8 条 ASGI 测试。都不跑 lifespan、不调真实 LLM/检索。
 
 **负向**
 
@@ -238,8 +238,8 @@ class WorkflowState(TypedDict, total=False):
 | 行为等价（真实 API） | 归一化后**不劣于同实现基线**（逐字等价在真实 API 下不可达 —— A/A 同实现重跑也是 0/15，故只能比「比率」与「差值」）；步数 / 工具序列相同率不低于 A/A 基线（12/15、10/15）；**judge ｜Δ｜ 低于噪声底 → 判「无可测差异」**；若声称有差异，须**超过**噪声底才可归因 | **已结账（2026-10-31，实验 G）**：步数相同率 **12/15**（主运行，= 基线，达标）；**judge ｜Δ｜=0.077 < 噪声底 0.357**（主运行，n=13）→ 无可测差异；工具序列 **9/15**（**复跑 v2**，`exp_G_tool_seq.json`）**< A/A 基线 10/15 → 该项未达标（差 1 题）**。来源拆分：步数/judge 用主运行 `exp_G_sr15.json`，工具序列用 v2 `exp_G_sr15_v2.json`（主运行未记录该字段）。逐条见 `docs/framework_comparison.md`「验收逐条结账」；噪声底见下 |
 | 成本可解释 | token 变化必须实测：n=18 实测 **+0.5%**（**prompt+completion 合计** 330,389 → 332,119；拆开看 prompt **+0.86%**、completion **−2.39%**；单轮在 +4.6% ~ −4.7% 之间波动，属噪声）。⚠️ 合成一个「token」会盖住机制信号：涨的是 **prompt** token（并发下 KV cache 命中下降），这正是本行要盯的那一项；并发度上调后再看 KV cache 是否退化 | 同批任务三轮合计 usage |
 | 断点续跑 | 杀掉进程后 resume 能完成，且已完成的子任务调用次数为 0 | 计数断言（FakeLLM / 打点） |
-| chat 未受影响 | `/api/chat` 与 `/api/chat/stream` 的事件结构与答案不变；`main.py` 不 import 新模块 | 源码断言 + 现有 864 项测试 |
-| 测试 | 新增 ≥ 25 项：图结构、并行、interrupt/resume、快照序列化、HTTP 端到端 | ✅ 相关测试文件累计 **55** 条（`test_react_langgraph.py` 9 / `test_deliverable_orchestration.py` 17 / `test_deliverable_resume.py` 6 / `test_deliverable_approval.py` 7 / `test_deliverable_http.py` 8 / `test_exp_g_tool_seq.py` 8），其中 **HTTP 端到端 8 条**（`test_deliverable_http.py`，真实 ASGI 路由/SSE 帧；不含 lifespan 预热）、**本轮新增 16 条** |
+| chat 未受影响 | `/api/chat` 与 `/api/chat/stream` 的事件结构与答案不变；`main.py` 不 import 新模块 | 源码断言 + 现有 869 项测试 |
+| 测试 | 新增 ≥ 25 项：图结构、并行、interrupt/resume、快照序列化、HTTP 端到端 | ✅ 相关测试文件累计 **60** 条（`test_react_langgraph.py` 9 / `test_deliverable_orchestration.py` 17 / `test_deliverable_resume.py` 6 / `test_deliverable_approval.py` 7 / `test_deliverable_http.py` 8 / `test_exp_g_tool_seq.py` 8 / `test_http_endpoints.py` 5），其中 **HTTP 端到端 13 条**（交付物 8 + chat/检索/健康 5，真实 ASGI 路由/SSE 帧；不含 lifespan 预热）、**本轮新增 21 条** |
 | 静态检查 | `ruff check .` 全绿 | CI |
 
 **明确不做**：不为了让数字好看而重跑 A–F；不把 deliverable 接进 chat 的评测口径。
