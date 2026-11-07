@@ -95,6 +95,7 @@ git commit、Python 版本、平台，以及当时的测量条件**（并发度�
 |---|---|
 | `PROJECT.md` | **一页纸项目介绍** —— 给第一次看这个项目的人（对外介绍场景） |
 | `README.md` | 怎么跑起来、架构要点、踩坑记录 |
+| `DEPLOY.md` | **Docker Compose 部署** —— 服务拓扑、端口、数据卷、备份、排错、验收清单 |
 | `ARCHITECTURE.md` | **每个工具用在哪、为什么用在那、改了会影响什么** —— 改代码前先看这个 |
 | `db/README.md` | **知识库 SQL 快照** —— 6.5 MB 单文件，`mysql -u root -p < db/kb_agent.sql` 一键恢复；附说明库名为何仍叫 `kb_agent` |
 | `docs/glossary.md` | **专有名词释义** —— RAG / BM25 / RRF / rerank / NDCG 等，每个都写清「是什么、用在哪、实测多少」 |
@@ -308,6 +309,24 @@ PyCharm 里打开项目后，右上角运行配置已经配好 4 个，免填：
 > 前端用 `npm` 而不是 `pnpm`：pnpm 11 的构建白名单（`onlyBuiltDependencies`）
 > 在这个环境下没生效，esbuild 的二进制拉不下来会直接导致 vite 起不来。
 > Windows 上必须用 `npm.cmd` 绕过 PowerShell 执行策略。
+
+### Docker Compose（交付版）
+
+仓库自带 docker-compose.yml，把 **api / mysql / web** 一起起起来；.env 只在运行时注入，不写进镜像。完整说明、备份与排错见 [DEPLOY.md](DEPLOY.md)。
+
+`ash
+cp .env.example .env   # 填 DEEPSEEK_API_KEY / SILICONFLOW_API_KEY / MYSQL_PASSWORD
+docker compose build
+docker compose up -d
+docker compose ps
+curl http://127.0.0.1:8000/api/health
+# 浏览器打开 http://127.0.0.1:8080
+`
+
+- 端口：API 8000，Web 8080。
+- 数据：./data bind mount 存 LanceDB/评测产物；mysql_data 命名卷存 MySQL。
+- 已验证：Ubuntu 24.04.4、Docker 29.1.3、Compose 2.40.3；pi/mysql healthy、Web 200、down/up 后索引与 health 恢复。
+- 限制：单 API 副本——LanceDB 与 BM25 是本地索引，不能直接 --scale api=N。
 
 ### 交付物任务：计划 → 审批 → 执行（可选）
 
@@ -574,6 +593,7 @@ cd lorekeeper\backend
 | 框架对照 | 实验 G（sr 15 条，HAND vs LangGraph）：judge / 步数 / 延迟 / token **均无可测差异**（p 全 > 0.3，n=13 有效配对）；judge Δ=0.077 小于 A/A 噪声底 0.357；复跑 v2 judge Δ=−0.231 仍在噪声内；工具序列 **9/15 < 基线 10/15**（差 1 题，按预注册口径未达标）→ **不迁**（[framework_comparison.md](docs/framework_comparison.md)） |
 | 多库路由 | 三态（库内/越界/未提及）；越界走无工具单轮，实测 0 步 / 1.1s，库内 3–5 步 / 5–8s |
 | MCP | 4 个工具以标准 MCP（SDK 2.3.0）暴露给外部 host，stdio 传输；**适配层与内置实现输出逐字符一致由守卫实跑保证**（16 项，真 `mcp.Client` 连真 server）。MCP 是**独立 server 入口**，本项目 Agent 始终走进程内直调，**两者之间没有运行时开关**（曾经有过 `TOOL_TRANSPORT`，核实发现无任何代码分支读它，已删），见 [docs/mcp.md](docs/mcp.md) |
+| 部署 | Docker Compose：api（FastAPI）+ mysql（8.0）+ web（Nginx）；`8000`/`8080`；`./data` 与 `mysql_data` 持久化；Ubuntu 24.04 实测 healthy / Web 200 / down-up 恢复（见 `DEPLOY.md`） |
 | 后端 | FastAPI，`/api/health` `/api/retrieve` `/api/chat` `/api/chat/stream` `/api/runs` `/api/runs/{run_id}` `/api/deliverable` `/api/ingest` `/api/stats` |
 | 前端 | React + Vite + TS，SSE 流式、工具时间线、引用、检索调试面板、双主题、背景图、移动端抽屉 |
 | 存储 | MySQL 语料三表与向量库**逐条一致**（`backfill_mysql.py` 剪枝后核对）：pages 1401（sr 706 / zzz 260 / ys 435）/ chunks 10843（3932 / 1498 / 5413）/ facts 25111（15017 / 4976 / 5118）。唯一差异是 ys 的「角色投稿测试（先说对不起）」正文长度为 0，被 `page_filter` 挡在索引外但 MySQL 记了"抓到了"；另有 runs / tool_calls / eval_cases / eval_results / sessions / messages |
