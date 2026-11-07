@@ -4,6 +4,8 @@
 > 混合检索（BM25 ∥ 向量 → RRF → Cross-Encoder 重排），6 组单变量消融（A–F）+ 框架对照（G）与交付物并行（P1），
 > 每个数字都能追溯到产生它的脚本与 git commit。
 
+> 🐳 **一键部署**：`docker compose up -d`（API `8000` / Web `8080`）；`./data` 与 `mysql_data` 持久化；见 [`DEPLOY.md`](DEPLOY.md)。
+
 ![问答界面](docs/screenshot-chat.png)
 
 | 维度 | 结果 | 出处 |
