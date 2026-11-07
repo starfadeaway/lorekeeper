@@ -1,4 +1,4 @@
-﻿# Docker 部署说明
+# Docker 部署说明
 
 > 目标：一条命令起 API、MySQL、前端 Nginx；数据落盘可持久化；本地/内网可用，不直接暴露公网。
 >
@@ -248,9 +248,9 @@ ports:
 √ games：sr/ys/zzz 都在
 √ http://127.0.0.1:8080：200
 √ 页面上问一句，能流式回答、引用可点
-√ docker compose down && up -d：LanceDB 索引与 health 恢复（MySQL 历史会话未逐条抽查）
+√ docker compose down && up -d：LanceDB 索引、MySQL 数据（约 240 MB）与 health 恢复
 √ 镜像内无 /app/.env
 ```
 
 > 验收环境：Ubuntu 24.04.4 LTS / Docker 29.1.3 / Compose 2.40.3，2026-11-07 在 VMware VM 实跑；不是 Windows 本机模拟。
-> 第 6 项验证了容器重建后索引仍能加载、health 仍 ready、问答仍可用；MySQL 历史会话没有逐条抽查，因此不写成「历史消息逐条核过」。
+> 第 6 项验证了容器重建后 LanceDB 索引仍能加载、MySQL 数据量（约 240 MB）仍在、health 仍 ready、问答仍可用；没有逐条抽查每条历史消息，因此不写成「历史消息逐条核过」。
