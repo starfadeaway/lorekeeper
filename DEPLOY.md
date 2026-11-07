@@ -243,13 +243,13 @@ ports:
 ## 12. 最短验收清单
 
 ```text
-[x] docker compose ps：api/mysql healthy，web Up
-[x] /api/health：ok=true, ready=true, mysql.ready
-[x] games：sr/ys/zzz 都在
-[x] http://127.0.0.1:8080：200
-[x] 页面上问一句，能流式回答、引用可点
-[x] docker compose down && up -d：LanceDB 索引与 health 恢复（MySQL 历史会话未逐条抽查）
-[x] 镜像内无 /app/.env
+√ docker compose ps：api/mysql healthy，web Up
+√ /api/health：ok=true, ready=true, mysql.ready
+√ games：sr/ys/zzz 都在
+√ http://127.0.0.1:8080：200
+√ 页面上问一句，能流式回答、引用可点
+√ docker compose down && up -d：LanceDB 索引与 health 恢复（MySQL 历史会话未逐条抽查）
+√ 镜像内无 /app/.env
 ```
 
 > 验收环境：Ubuntu 24.04.4 LTS / Docker 29.1.3 / Compose 2.40.3，2026-11-07 在 VMware VM 实跑；不是 Windows 本机模拟。
